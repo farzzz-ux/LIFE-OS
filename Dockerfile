@@ -1,5 +1,5 @@
-﻿# ==============================================================================
-# LIFE OS — Production Multi-Stage Dockerfile
+# ==============================================================================
+# LIFE OS � Production Multi-Stage Dockerfile
 # Optimized for security, small image footprint, and non-root execution.
 # ==============================================================================
 
@@ -54,4 +54,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Start production server
-CMD [node, server.cjs]
+CMD ["node", "server.cjs"]

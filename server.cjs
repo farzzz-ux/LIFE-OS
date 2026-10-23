@@ -84,6 +84,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Input sanitization against Stored XSS
 app.use(sanitizeInput);
 
+// Health check endpoint for Render & Docker container health monitoring
+app.get(['/health', '/api/health'], (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
+});
+
 // ==========================================
 // API ROUTES WITH AUTH & TENANT RESOLUTION
 // ==========================================
