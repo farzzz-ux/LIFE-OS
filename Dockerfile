@@ -22,7 +22,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Install runtime dependencies for SQLite
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl libstdc++
 
 # Copy dependencies from builder stage
 COPY --from=builder /app/node_modules ./node_modules
