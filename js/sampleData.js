@@ -12,7 +12,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Morning',
       motivation: 'Kickstart cellular hydration and metabolism immediately after waking',
       color: 'cyan',
-      completedDates: ['2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-01T06:30:00.000Z'
     },
     {
@@ -22,7 +22,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Morning',
       motivation: 'Protect high-cognitive focus time before responding to notifications',
       color: 'violet',
-      completedDates: ['2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-01T08:00:00.000Z'
     },
     {
@@ -32,7 +32,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Morning',
       motivation: 'Sustain cardiovascular endurance and midday mental energy',
       color: 'emerald',
-      completedDates: ['2026-10-14', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-02T07:15:00.000Z'
     },
     {
@@ -42,7 +42,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Evening',
       motivation: 'Consistent continuous learning compounds into world-class expertise',
       color: 'amber',
-      completedDates: ['2026-10-15', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-02T20:00:00.000Z'
     },
     {
@@ -52,7 +52,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Afternoon',
       motivation: 'Reset central nervous system and eliminate cognitive fatigue',
       color: 'cyan',
-      completedDates: ['2026-10-16', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-03T13:30:00.000Z'
     },
     {
@@ -62,7 +62,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Evening',
       motivation: 'Zero friction mornings start with intentional evening planning',
       color: 'violet',
-      completedDates: ['2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19'],
+      completedDates: [],
       createdAt: '2026-10-03T21:00:00.000Z'
     },
     {
@@ -72,7 +72,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Daily',
       motivation: 'High physical output requires clean unrefined fuel',
       color: 'emerald',
-      completedDates: ['2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-04T12:00:00.000Z'
     },
     {
@@ -82,7 +82,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Afternoon',
       motivation: 'Refine clean software crafting patterns and code quality',
       color: 'amber',
-      completedDates: ['2026-10-15', '2026-10-16', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-05T16:00:00.000Z'
     },
     {
@@ -92,7 +92,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Evening',
       motivation: 'Ground perspective and anchor appreciation for daily breakthroughs',
       color: 'rose',
-      completedDates: ['2026-10-14', '2026-10-15', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-05T21:30:00.000Z'
     },
     {
@@ -102,7 +102,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Evening',
       motivation: 'Deep restorative REM sleep and melatonin stabilization',
       color: 'cyan',
-      completedDates: ['2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19'],
+      completedDates: [],
       createdAt: '2026-10-06T22:00:00.000Z'
     },
     {
@@ -112,7 +112,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Daily',
       motivation: 'Non-exercise physical activity for longevity and health',
       color: 'emerald',
-      completedDates: ['2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-07T18:00:00.000Z'
     },
     {
@@ -122,7 +122,7 @@ const DEFAULT_SAMPLE_DATA = {
       routine: 'Evening',
       motivation: 'Zero financial leaks through intentional daily awareness',
       color: 'amber',
-      completedDates: ['2026-10-17', '2026-10-18', '2026-10-19', '2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-08T20:30:00.000Z'
     }
   ],
@@ -131,7 +131,7 @@ const DEFAULT_SAMPLE_DATA = {
     {
       id: 't_1',
       title: 'Finalize Q4 Production Architecture RFC & Review',
-      completed: true,
+      completed: false,
       priority: 'high',
       category: 'Work',
       dueDate: '2026-10-20',
@@ -142,7 +142,7 @@ const DEFAULT_SAMPLE_DATA = {
     {
       id: 't_2',
       title: 'Conduct Automated Performance & 60fps Profiling',
-      completed: true,
+      completed: false,
       priority: 'high',
       category: 'Work',
       dueDate: '2026-10-20',
@@ -153,7 +153,7 @@ const DEFAULT_SAMPLE_DATA = {
     {
       id: 't_3',
       title: 'Review Quarterly Savings & Mutual Fund Allocation',
-      completed: true,
+      completed: false,
       priority: 'medium',
       category: 'Finance',
       dueDate: '2026-10-20',
@@ -164,7 +164,7 @@ const DEFAULT_SAMPLE_DATA = {
     {
       id: 't_4',
       title: 'Ship Double-Check Safety Modal for Settings Data',
-      completed: true,
+      completed: false,
       priority: 'high',
       category: 'Work',
       dueDate: '2026-10-20',
@@ -175,7 +175,7 @@ const DEFAULT_SAMPLE_DATA = {
     {
       id: 't_5',
       title: 'Morning 5km Recovery Run & Stretching',
-      completed: true,
+      completed: false,
       priority: 'medium',
       category: 'Health',
       dueDate: '2026-10-20',
@@ -186,7 +186,7 @@ const DEFAULT_SAMPLE_DATA = {
     {
       id: 't_6',
       title: 'Update Clean Cloud Backup & Export Data',
-      completed: true,
+      completed: false,
       priority: 'low',
       category: 'Personal',
       dueDate: '2026-10-20',
@@ -326,7 +326,7 @@ const DEFAULT_SAMPLE_DATA = {
       category: 'Fitness',
       recurrence: 'everyday',
       repeatDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      completedDates: ['2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-01T07:00:00.000Z'
     },
     {
@@ -338,7 +338,7 @@ const DEFAULT_SAMPLE_DATA = {
       category: 'Personal',
       recurrence: 'everyday',
       repeatDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-      completedDates: ['2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-01T08:00:00.000Z'
     },
     {
@@ -350,7 +350,7 @@ const DEFAULT_SAMPLE_DATA = {
       category: 'Work',
       recurrence: 'selected_days',
       repeatDays: ['Mon', 'Tue', 'Wed', 'Thu'],
-      completedDates: ['2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-02T09:00:00.000Z'
     },
     {
@@ -362,7 +362,7 @@ const DEFAULT_SAMPLE_DATA = {
       category: 'Work',
       recurrence: 'everyday',
       repeatDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-      completedDates: ['2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-02T11:30:00.000Z'
     },
     {
@@ -374,7 +374,7 @@ const DEFAULT_SAMPLE_DATA = {
       category: 'Health',
       recurrence: 'everyday',
       repeatDays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      completedDates: ['2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-03T13:00:00.000Z'
     },
     {
@@ -386,7 +386,7 @@ const DEFAULT_SAMPLE_DATA = {
       category: 'Work',
       recurrence: 'selected_days',
       repeatDays: ['Tue', 'Thu'],
-      completedDates: ['2026-10-20'],
+      completedDates: [],
       createdAt: '2026-10-03T14:00:00.000Z'
     },
     {
@@ -846,17 +846,7 @@ const DEFAULT_SAMPLE_DATA = {
     }
   ],
 
-  unlockedAchievements: {
-    first_habit: { unlockedAt: '2026-10-01T08:00:00.000Z' },
-    task_master: { unlockedAt: '2026-10-02T10:00:00.000Z' },
-    habit_streak_3: { unlockedAt: '2026-10-05T09:00:00.000Z' },
-    habit_streak_7: { unlockedAt: '2026-10-12T09:00:00.000Z' },
-    first_goal: { unlockedAt: '2026-10-03T11:00:00.000Z' },
-    financial_discipline: { unlockedAt: '2026-10-06T14:00:00.000Z' },
-    time_architect: { unlockedAt: '2026-10-08T15:00:00.000Z' },
-    deep_reflector: { unlockedAt: '2026-10-09T18:00:00.000Z' },
-    iron_will: { unlockedAt: '2026-10-16T12:00:00.000Z' }
-  },
+  unlockedAchievements: {},
 
   moodLogs: [
     { date: '2026-10-14', score: 5, note: 'High energy and strong deep work focus' },

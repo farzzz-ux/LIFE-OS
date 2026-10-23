@@ -1963,26 +1963,32 @@ function getMetricValueForAchievement(ach, state = appState) {
 }
 
 function evaluateAchievements(silent = false) {
-  if (!appState.unlockedAchievements) {
+  if (!appState.unlockedAchievements || typeof appState.unlockedAchievements !== 'object') {
     appState.unlockedAchievements = {};
   }
 
+  const newUnlocked = {};
   let newlyUnlocked = [];
 
   ACHIEVEMENTS_LIST.forEach(ach => {
     const currentVal = getMetricValueForAchievement(ach, appState);
-    if (currentVal >= ach.target && !appState.unlockedAchievements[ach.id]) {
-      appState.unlockedAchievements[ach.id] = {
+    if (currentVal >= ach.target) {
+      newUnlocked[ach.id] = appState.unlockedAchievements[ach.id] || {
         unlockedAt: new Date().toISOString()
       };
-      newlyUnlocked.push(ach);
+      if (!appState.unlockedAchievements[ach.id]) {
+        newlyUnlocked.push(ach);
+      }
     }
   });
+
+  // Strictly assign only the genuinely earned achievements so unearned/sample achievements are never stuck
+  appState.unlockedAchievements = newUnlocked;
+  updateAchievementsBadge();
 
   if (newlyUnlocked.length > 0) {
     saveStateLocally();
     syncWithBackend();
-    updateAchievementsBadge();
 
     if (!silent) {
       newlyUnlocked.forEach((ach, index) => {
@@ -1992,8 +1998,6 @@ function evaluateAchievements(silent = false) {
         }, index * 1200);
       });
     }
-  } else {
-    updateAchievementsBadge();
   }
 }
 
@@ -6909,7 +6913,10 @@ function updateClock() {
    Allows swiping down any active modal/bottom-sheet window on mobile devices
    ========================================================================== */
 function initModalSwipeDownGestures() {
-  if (window.__lifeOsSwipeGesturesAttached) return;
+  // Disabled as per user request: Prevent accidental dismissal of modals
+  // (Quick Entry, Achievements, Journal, etc.) when swiping down on mobile.
+  // Modals can be closed reliably using their close (X) buttons, cancel buttons, or tapping the backdrop.
+  return;
   window.__lifeOsSwipeGesturesAttached = true;
 
   let activeDialog = null;

@@ -9692,3 +9692,187 @@ body {
 }
 
 
+
+
+/* ==========================================================================
+   Mobile Phone Stats Tab & Modals — Horizontal Scrollbar & Zero Overlap
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Timeframe Pills on Stats Tab (Week, Month, Overall) */
+  .timeframe-pill-group {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding: 6px 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(99, 102, 241, 0.4) transparent !important;
+    background: rgba(10, 15, 29, 0.85) !important;
+    border-radius: var(--radius-full) !important;
+  }
+
+  .timeframe-pill-group::-webkit-scrollbar {
+    height: 4px !important;
+  }
+
+  .timeframe-pill-group::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5) !important;
+    border-radius: 9999px !important;
+  }
+
+  .timeframe-pill {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 8px 16px !important;
+    min-height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Star Card Controls (Timeframe + Benchmark toggle) */
+  .star-card-controls {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .star-card-controls .benchmark-toggle-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+  }
+
+  /* Star Card Header & Rating Pill */
+  .star-header-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .star-section-title {
+    font-size: 1.15rem !important;
+    word-break: break-word !important;
+  }
+
+  .star-rating-pill {
+    align-self: flex-start !important;
+  }
+
+  /* Life Score Hero Card Top Row */
+  .score-hero-top-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .score-hero-top-row .score-tier-badge {
+    align-self: flex-start !important;
+  }
+
+  /* Analytics Comparative Matrix Table Horizontal Scroll */
+  .analytics-matrix-card {
+    padding: 16px !important;
+    overflow: hidden !important;
+  }
+
+  .analytics-matrix-card > div {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(6, 182, 212, 0.4) transparent !important;
+    padding-bottom: 8px !important;
+  }
+
+  .analytics-matrix-card > div::-webkit-scrollbar {
+    height: 5px !important;
+  }
+
+  .analytics-matrix-card > div::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.5) !important;
+    border-radius: 9999px !important;
+  }
+
+  .matrix-table {
+    min-width: 520px !important;
+    width: 100% !important;
+  }
+
+  /* Achievements Modal Summary Strip Horizontal Scroll */
+  .achievements-summary-strip {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 10px !important;
+    padding: 4px 2px 10px 2px !important;
+    width: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(168, 85, 247, 0.4) transparent !important;
+  }
+
+  .achievements-summary-strip::-webkit-scrollbar {
+    height: 5px !important;
+  }
+
+  .achievements-summary-strip::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #a855f7, #6366f1) !important;
+    border-radius: 9999px !important;
+  }
+
+  .ach-stat-box {
+    flex: 0 0 145px !important;
+    min-width: 145px !important;
+    max-width: 180px !important;
+    min-height: 72px !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Achievements Filter Bar Horizontal Scroll */
+  .achievements-filter-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding: 4px 2px 10px 2px !important;
+    width: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(99, 102, 241, 0.4) transparent !important;
+  }
+
+  .achievements-filter-bar::-webkit-scrollbar {
+    height: 4px !important;
+  }
+
+  .achievements-filter-bar::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5) !important;
+    border-radius: 9999px !important;
+  }
+
+  .ach-filter-chip {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+  }
+}
