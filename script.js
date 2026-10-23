@@ -758,7 +758,15 @@ async function syncWithBackend() {
   try {
     const headers = getAuthHeaders();
     const isAuth = Boolean(headers['Authorization']);
-    const endpoint = isAuth ? `${API_BASE}/api/user/data` : `${API_BASE}/api/sync`;
+
+    // If not logged in, keep data strictly stored on THIS device's localStorage
+    // Do NOT send to shared guest server endpoint so multiple phones don't cross-share data
+    if (!isAuth) {
+      updateSyncStatus(true, 'Local Device Storage');
+      return true;
+    }
+
+    const endpoint = `${API_BASE}/api/user/data`;
 
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -866,8 +874,17 @@ async function loadFullState() {
   try {
     const headers = getAuthHeaders();
     const isAuth = Boolean(headers['Authorization']);
-    const endpoint = isAuth ? `${API_BASE}/api/user/data` : `${API_BASE}/api/data`;
 
+    // When not logged in, use strictly local device storage from localStorage
+    // Never pull shared guest server data so each device remains independent
+    if (!isAuth) {
+      updateSyncStatus(true, 'Local Device Storage');
+      renderPage();
+      evaluateAchievements(true);
+      return;
+    }
+
+    const endpoint = `${API_BASE}/api/user/data`;
     const res = await fetch(endpoint, { headers });
     if (res.ok) {
       const serverData = await res.json();

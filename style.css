@@ -9876,3 +9876,148 @@ body {
     white-space: nowrap !important;
   }
 }
+
+
+/* ==========================================================================
+   TURN 14 MOBILE ENHANCEMENTS:
+   - Fix iPhone 7 navbar: justify-content flex-start so Home is never cut off
+   - Restore Achievements summary strip to balanced 2x2 grid (no horizontal scroll)
+   - Sticky Achievements filter bar when scrolling cards
+   - Full-window horizontal scroll on Stats tab (Analytics) with zero cut-off
+   ========================================================================== */
+
+/* 1. iPhone 7 & Mobile Navigation Bar Fix */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex !important;
+    justify-content: flex-start !important; /* Starts at left: 0 so Home / Dashboard is ALWAYS first and visible! */
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 0 4px !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    scrollbar-width: none !important;
+  }
+
+  .mobile-nav-item {
+    flex: 0 0 auto !important;
+    min-width: 46px !important;
+    padding: 4px 6px !important;
+    scroll-snap-align: start !important;
+  }
+
+  /* 2. Achievements Summary Strip: 2x2 Grid (No horizontal scroll, as before) */
+  .achievements-summary-strip {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    flex-direction: unset !important;
+    flex-wrap: unset !important;
+    overflow-x: visible !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
+    padding: 0 !important;
+  }
+
+  .ach-stat-box {
+    flex: unset !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    min-height: 64px !important;
+    padding: 10px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    background: rgba(14, 20, 36, 0.92) !important;
+  }
+
+  /* 3. Sticky Achievements Filter Bar when Scrolling Cards */
+  .achievements-modal-dialog {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    position: relative !important;
+  }
+
+  .achievements-filter-bar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+    background: rgba(10, 15, 29, 0.96) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    padding: 8px 4px !important;
+    margin-top: 4px !important;
+    margin-bottom: 10px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  /* 4. Stats Tab (Analytics): Full-Window Horizontal Scroll & Remove Pill Scroller */
+  .timeframe-pill-group {
+    overflow-x: visible !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+
+  .timeframe-pill {
+    flex: 1 1 auto !important;
+    min-width: 80px !important;
+  }
+
+  /* Full container scroll on analytics page so elements on the right are never cut off */
+  #view-analytics,
+  .app-view#view-analytics,
+  body:has(#view-analytics) .main-content {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(56, 189, 248, 0.4) transparent !important;
+  }
+
+  #view-analytics::-webkit-scrollbar,
+  body:has(#view-analytics) .main-content::-webkit-scrollbar {
+    height: 6px !important;
+  }
+
+  #view-analytics::-webkit-scrollbar-thumb,
+  body:has(#view-analytics) .main-content::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.6) !important;
+    border-radius: 9999px !important;
+  }
+
+  .star-analytics-card,
+  .life-score-hero-card,
+  .analytics-matrix-card {
+    min-width: 340px !important;
+  }
+}
+
+/* Extra optimization specifically for iPhone 7 and narrow screens <= 400px */
+@media (max-width: 400px) {
+  .mobile-bottom-nav {
+    justify-content: flex-start !important;
+    padding: 0 2px !important;
+    gap: 2px !important;
+  }
+
+  .mobile-nav-item {
+    min-width: 44px !important;
+    padding: 3px 2px !important;
+    gap: 2px !important;
+  }
+
+  .mobile-nav-item i {
+    font-size: 1.05rem !important;
+  }
+
+  .mobile-nav-item span {
+    font-size: 0.60rem !important;
+    letter-spacing: -0.02em !important;
+  }
+}
