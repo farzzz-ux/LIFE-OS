@@ -1,0 +1,17 @@
+node_modules
+.env
+.env.*
+.git
+.gitignore
+tests
+archive
+*.log
+*.bak
+data/*.bak
+data/*.backup
+data/backups
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+scratch
+browser

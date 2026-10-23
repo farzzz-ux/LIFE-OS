@@ -1,0 +1,27 @@
+services:
+  lifeos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lifeos:latest
+    container_name: lifeos-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-lifeos-cloud-sync-super-secure-production-jwt-token-key-2026}
+      - DB_PATH=/app/data/lifeos.db
+      - BACKUP_RETENTION_COUNT=7
+      - AUTH_RATE_LIMIT_MAX=100
+      - API_RATE_LIMIT_MAX=1000
+    volumes:
+      # Persistent volume mount for SQLite ACID database & snapshots
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

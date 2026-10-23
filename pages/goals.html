@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Goals — LifeOS</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <meta name="description" content="Set ambitious life goals, monitor milestones, track progress percentages, and achieve lifelong mastery with LIFE OS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../style.css?v=2.5">
+  <script>
+    document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
+</head>
+<body>
+  <!-- Ambient Glow Backgrounds -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- App Main Wrapper -->
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">
+          <div class="brand-icon">
+            <i class="fa-solid fa-atom"></i>
+          </div>
+          <div class="brand-names">
+            <h1 class="brand-title">LIFE <span class="badge-os">OS</span></h1>
+            <span class="brand-subtitle">Life Command Center</span>
+          </div>
+        </div>
+      </div>
+
+      
+
+      <!-- Nav Menu -->
+      <nav class="nav-menu" aria-label="Main Navigation">
+        <a href="../index.html" class="nav-item" id="nav-link-dashboard">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="calendar.html" class="nav-item" id="nav-link-calendar">
+          <i class="fa-regular fa-calendar-days"></i>
+          <span>Calendar</span>
+          <span class="nav-counter" id="nav-schedule-counter">0</span>
+        </a>
+        <a href="habits.html" class="nav-item" id="nav-link-habits">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+          <span>Habits</span>
+          <span class="nav-counter" id="nav-habit-counter">0</span>
+        </a>
+        <a href="tasks.html" class="nav-item" id="nav-link-tasks">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Tasks</span>
+          <span class="nav-counter" id="nav-task-counter">0</span>
+        </a>
+        <a href="finances.html" class="nav-item" id="nav-link-finances">
+          <i class="fa-solid fa-wallet"></i>
+          <span>Finances</span>
+        </a>
+        <a href="journal.html" class="nav-item" id="nav-link-journal">
+          <i class="fa-solid fa-book-bookmark"></i>
+          <span>Journal</span>
+          <span class="nav-counter" id="nav-journal-counter">0</span>
+        </a>
+        <a href="goals.html" class="nav-item active" id="nav-link-goals">
+          <i class="fa-solid fa-bullseye text-violet"></i>
+          <span>Goals</span>
+          <span class="nav-counter" id="nav-goals-counter">0</span>
+        </a>
+        <a href="analytics.html" class="nav-item" id="nav-link-analytics">
+          <i class="fa-solid fa-star text-amber"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="settings.html" class="nav-item" id="nav-link-settings">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <!-- Account & Cloud Sync Panel -->
+      <div class="sync-status-card sidebar-account-card" id="sync-status-card" title="Account & Cloud Sync Settings" role="button" tabindex="0">
+        <div class="sidebar-account-avatar" id="sidebar-account-avatar">
+          <i class="fa-solid fa-circle-user text-cyan"></i>
+        </div>
+        <div class="sync-info">
+          <span class="sync-label" id="sync-label">Account</span>
+          <span class="sync-sub" id="sync-sub">Local Workspace • Sign In</span>
+        </div>
+        <div class="sync-indicator online" id="sync-indicator" title="Connected"></div>
+        <button type="button" class="sync-refresh-btn" id="manual-sync-btn" title="Force Sync">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+
+      <!-- Audio Controls -->
+      <div class="sidebar-footer">
+        <button type="button" id="sound-toggle-btn" class="footer-btn" title="Toggle Sound Effects">
+          <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+          <span id="sound-label">Sound On</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <!-- Top Action Bar -->
+      <header class="top-bar">
+        <div class="top-bar-header-row">
+          <div class="date-widget">
+            <div class="calendar-icon brand-top-icon" title="LifeOS">
+              <i class="fa-regular fa-calendar-days desktop-cal-icon"></i>
+              <i class="fa-solid fa-atom mobile-logo-icon"></i>
+            </div>
+            <div>
+              <h2 class="current-date-text" id="top-date-display">Today</h2>
+              <div class="live-clock" id="top-clock-display">00:00:00</div>
+            </div>
+          </div>
+
+          <!-- Top-Right Status Group: Streak & Sync/Sign In -->
+          <div class="header-status-group">
+            <button type="button" class="btn btn-outline nav-auth-btn" id="open-auth-modal-btn" title="Account & Cloud Sync">
+              <i class="fa-solid fa-circle-user text-cyan"></i>
+              <span id="nav-user-label">Account</span>
+            </button>
+            <div class="quick-pill minimal-streak-pill" id="quick-streak-pill" title="Current best active streak">
+              <i class="fa-solid fa-fire text-amber"></i>
+              <span id="top-best-streak">0d</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button type="button" class="btn btn-outline nav-achievements-btn" id="open-achievements-btn" title="View Achievements (Press 'A')">
+            <i class="fa-solid fa-trophy text-amber"></i>
+            <span>Achievements</span>
+            <span class="achievements-badge" id="achievements-unlocked-count">0</span>
+          </button>
+          <button type="button" class="btn btn-violet btn-glow" id="open-goal-modal-btn" title="Create New Goals">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create New Goals</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Goals View -->
+      <section id="view-goals" class="app-view active">
+        <div class="glass-panel">
+          <div class="panel-header-full">
+            <div class="header-action-split">
+              <div>
+                <h2 class="view-title">Goals</h2>
+                <p class="view-subtitle">Define high-leverage aspirations, track milestone velocity, and turn long-range vision into reality.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4-Card Overview in Box Style -->
+          <div class="goals-overview-grid">
+            <div class="goal-stat-card">
+              <div class="fin-card-top-row">
+                <span class="fin-card-label">Total Goals</span>
+                <div class="fin-icon-badge" style="background: rgba(139, 92, 246, 0.15); color: var(--violet); border: 1px solid rgba(139, 92, 246, 0.3);"><i class="fa-solid fa-bullseye"></i></div>
+              </div>
+              <div class="fin-card-value text-violet" id="goals-total-count">0</div>
+              <div class="fin-card-bottom">
+                <span class="fin-card-sub" id="goals-total-sub">All strategic milestones</span>
+              </div>
+            </div>
+
+            <div class="goal-stat-card">
+              <div class="fin-card-top-row">
+                <span class="fin-card-label">In Progress</span>
+                <div class="fin-icon-badge fin-icon-income"><i class="fa-solid fa-spinner"></i></div>
+              </div>
+              <div class="fin-card-value text-cyan" id="goals-active-count">0</div>
+              <div class="fin-card-bottom">
+                <span class="fin-card-sub" id="goals-active-sub">Actively being pursued</span>
+              </div>
+            </div>
+
+            <div class="goal-stat-card">
+              <div class="fin-card-top-row">
+                <span class="fin-card-label">Completed</span>
+                <div class="fin-icon-badge fin-icon-balance"><i class="fa-solid fa-circle-check"></i></div>
+              </div>
+              <div class="fin-card-value text-emerald" id="goals-completed-count">0</div>
+              <div class="fin-card-bottom">
+                <span class="fin-card-sub" id="goals-completed-sub">100% achieved</span>
+              </div>
+            </div>
+
+            <div class="goal-stat-card">
+              <div class="fin-card-top-row">
+                <span class="fin-card-label">Avg Progress</span>
+                <div class="fin-icon-badge fin-icon-savings"><i class="fa-solid fa-chart-line"></i></div>
+              </div>
+              <div class="fin-card-value text-amber" id="goals-avg-progress">0%</div>
+              <div class="fin-card-bottom">
+                <div class="fin-progress-track">
+                  <div class="fin-progress-bar bar-amber" id="goals-avg-bar" style="width: 0%;"></div>
+                </div>
+                <span class="fin-card-sub" id="goals-avg-sub">Across active goals</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls: Filter Chips and Search -->
+          <div class="section-controls-row">
+            <div class="filter-chips-bar" id="goals-filter-chips">
+              <button type="button" class="chip active" data-filter="all">All Goals</button>
+              <button type="button" class="chip" data-filter="in-progress">In Progress</button>
+              <button type="button" class="chip" data-filter="completed">Completed</button>
+              <button type="button" class="chip" data-filter="Career"><i class="fa-solid fa-briefcase"></i> Career</button>
+              <button type="button" class="chip" data-filter="Health"><i class="fa-solid fa-heart-pulse"></i> Health</button>
+              <button type="button" class="chip" data-filter="Finance"><i class="fa-solid fa-wallet"></i> Finance</button>
+              <button type="button" class="chip" data-filter="Learning"><i class="fa-solid fa-graduation-cap"></i> Learning</button>
+              <button type="button" class="chip" data-filter="Personal"><i class="fa-solid fa-user"></i> Personal</button>
+            </div>
+
+            <div class="search-input-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="goals-search-input" placeholder="Search goals, milestones or metrics..." class="styled-input" aria-label="Search goals">
+            </div>
+          </div>
+
+          <!-- Goals Grid (Scrollable Stack) -->
+          <div class="goals-list-container scrollable-stack" id="goals-cards-list">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" id="goals-empty-state" style="display: none; padding: 60px 20px;">
+            <div class="empty-icon"><i class="fa-solid fa-bullseye text-violet"></i></div>
+            <h4 class="empty-title">No Goals Match Your Filter</h4>
+            <p class="empty-desc">Create ambitious target goals and watch your daily routines turn into massive life milestones.</p>
+            <button type="button" class="btn btn-violet btn-glow" id="empty-create-goal-btn" style="margin-top: 14px;">
+              <i class="fa-solid fa-plus"></i>
+              <span>Create New Goals</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= GOAL CREATOR / EDIT MODAL ================= -->
+  <div id="goal-modal" class="floating-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="floating-modal-dialog">
+      <div class="floating-modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-icon-badge" style="background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.35);">
+            <i class="fa-solid fa-bullseye text-violet"></i>
+          </div>
+          <div>
+            <h3 class="floating-title" id="goal-modal-title">Create Life Goal</h3>
+            <p class="floating-subtitle">Define target outcomes and milestones</p>
+          </div>
+        </div>
+        <button type="button" class="floating-close-btn" id="goal-modal-close" aria-label="Close modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="goal-form" style="padding: 24px;">
+        <input type="hidden" id="goal-edit-id" value="">
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="field-label" for="goal-title-input">Goal Title <span class="required">*</span></label>
+          <input type="text" id="goal-title-input" class="styled-input" placeholder="e.g. Build ₹1,00,000 Emergency Fund, Run 10k Marathon..." required>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 16px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="field-label" for="goal-category-select">Category</label>
+            <select id="goal-category-select" class="styled-input">
+              <option value="Career">Career & Work</option>
+              <option value="Health">Health & Fitness</option>
+              <option value="Finance">Financial Wealth</option>
+              <option value="Learning">Learning & Skills</option>
+              <option value="Personal">Personal & Lifestyle</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="flex: 1;">
+            <label class="field-label" for="goal-target-date-input">Target Deadline</label>
+            <input type="date" id="goal-target-date-input" class="styled-input">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 16px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="field-label" for="goal-progress-slider">Current Progress: <strong id="goal-progress-display" class="text-cyan">0%</strong></label>
+            <input type="range" id="goal-progress-slider" min="0" max="100" value="0" class="styled-range" style="width: 100%; margin-top: 8px;">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="field-label" for="goal-metrics-input">Key Metric / Target Value</label>
+            <input type="text" id="goal-metrics-input" class="styled-input" placeholder="e.g. ₹75,000 / ₹1,00,000 or 10 / 12 Books">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="field-label" for="goal-desc-input">Description & Motivation</label>
+          <textarea id="goal-desc-input" class="styled-input" rows="3" placeholder="Why is this goal important? What routines will support it?" style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="field-label" for="goal-milestones-input">Milestones (Comma-separated)</label>
+          <input type="text" id="goal-milestones-input" class="styled-input" placeholder="e.g. Phase 1 complete, 5k sub-28m, Final rollout">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button type="button" class="btn btn-outline" id="goal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-violet btn-glow" id="goal-save-btn">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span id="goal-save-btn-text">Save Goal</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Fixed Mobile Bottom Navigation Bar (Touch-friendly, min 48px tap targets) -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+    <a href="../index.html" class="mobile-nav-item" id="mob-nav-dashboard" title="Dashboard">
+      <i class="fa-solid fa-layer-group"></i>
+      <span>Home</span>
+    </a>
+    <a href="habits.html" class="mobile-nav-item" id="mob-nav-habits" title="Habits">
+      <i class="fa-solid fa-fire-flame-curved"></i>
+      <span>Habits</span>
+    </a>
+    <a href="tasks.html" class="mobile-nav-item" id="mob-nav-tasks" title="Tasks">
+      <i class="fa-solid fa-list-check"></i>
+      <span>Tasks</span>
+    </a>
+    <a href="calendar.html" class="mobile-nav-item" id="mob-nav-calendar" title="Calendar">
+      <i class="fa-regular fa-calendar-days"></i>
+      <span>Calendar</span>
+    </a>
+    <a href="finances.html" class="mobile-nav-item" id="mob-nav-finances" title="Finances">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Finance</span>
+    </a>
+    <a href="goals.html" class="mobile-nav-item active" id="mob-nav-goals" title="Goals">
+      <i class="fa-solid fa-bullseye"></i>
+      <span>Goals</span>
+    </a>
+    <a href="analytics.html" class="mobile-nav-item" id="mob-nav-analytics" title="Analytics">
+      <i class="fa-solid fa-star"></i>
+      <span>Stats</span>
+    </a>
+    <a href="journal.html" class="mobile-nav-item" id="mob-nav-journal" title="Journal">
+      <i class="fa-solid fa-book-bookmark"></i>
+      <span>Journal</span>
+    </a>
+    <a href="settings.html" class="mobile-nav-item" id="mob-nav-settings" title="Settings">
+      <i class="fa-solid fa-gear"></i>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <script src="../js/sampleData.js"></script>
+  <script src="../script.js?v=2.5"></script>
+</body>
+</html>

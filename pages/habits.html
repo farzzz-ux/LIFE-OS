@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Habits — LifeOS</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <meta name="description" content="Track daily habit streaks, 7-day completion matrices, routines, and preserve your momentum in LIFE OS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../style.css?v=2.2">
+  <script>
+    document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
+</head>
+<body>
+  <!-- Ambient Glow Backgrounds -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- App Main Wrapper -->
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">
+          <div class="brand-icon">
+            <i class="fa-solid fa-atom"></i>
+          </div>
+          <div class="brand-names">
+            <h1 class="brand-title">LIFE <span class="badge-os">OS</span></h1>
+            <span class="brand-subtitle">Life Command Center</span>
+          </div>
+        </div>
+      </div>
+
+      
+
+      <!-- Nav Menu -->
+      <nav class="nav-menu" aria-label="Main Navigation">
+        <a href="../index.html" class="nav-item" id="nav-link-dashboard">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="calendar.html" class="nav-item" id="nav-link-calendar">
+          <i class="fa-regular fa-calendar-days"></i>
+          <span>Calendar</span>
+          <span class="nav-counter" id="nav-schedule-counter">0</span>
+        </a>
+        <a href="habits.html" class="nav-item active" id="nav-link-habits">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+          <span>Habits</span>
+          <span class="nav-counter" id="nav-habit-counter">0</span>
+        </a>
+        <a href="tasks.html" class="nav-item" id="nav-link-tasks">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Tasks</span>
+          <span class="nav-counter" id="nav-task-counter">0</span>
+        </a>
+        <a href="finances.html" class="nav-item" id="nav-link-finances">
+          <i class="fa-solid fa-wallet"></i>
+          <span>Finances</span>
+        </a>
+        <a href="journal.html" class="nav-item" id="nav-link-journal">
+          <i class="fa-solid fa-book-bookmark"></i>
+          <span>Journal</span>
+          <span class="nav-counter" id="nav-journal-counter">0</span>
+        </a>
+        <a href="goals.html" class="nav-item" id="nav-link-goals">
+          <i class="fa-solid fa-bullseye"></i>
+          <span>Goals</span>
+          <span class="nav-counter" id="nav-goals-counter">0</span>
+        </a>
+        <a href="analytics.html" class="nav-item" id="nav-link-analytics">
+          <i class="fa-solid fa-star text-amber"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="settings.html" class="nav-item" id="nav-link-settings">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <!-- Account & Cloud Sync Panel -->
+      <div class="sync-status-card sidebar-account-card" id="sync-status-card" title="Account & Cloud Sync Settings" role="button" tabindex="0">
+        <div class="sidebar-account-avatar" id="sidebar-account-avatar">
+          <i class="fa-solid fa-circle-user text-cyan"></i>
+        </div>
+        <div class="sync-info">
+          <span class="sync-label" id="sync-label">Account</span>
+          <span class="sync-sub" id="sync-sub">Local Workspace • Sign In</span>
+        </div>
+        <div class="sync-indicator online" id="sync-indicator" title="Connected"></div>
+        <button type="button" class="sync-refresh-btn" id="manual-sync-btn" title="Force Sync">
+          <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+      </div>
+
+      <!-- Audio Controls -->
+      <div class="sidebar-footer">
+        <button type="button" id="sound-toggle-btn" class="footer-btn" title="Toggle Sound Effects" style="width: 100%;">
+          <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+          <span id="sound-label">Sound On</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="content-area">
+      <!-- Top Action Bar -->
+      <header class="top-bar">
+        <div class="top-bar-header-row">
+          <div class="date-widget">
+            <div class="calendar-icon brand-top-icon" title="LifeOS">
+              <i class="fa-regular fa-calendar-days desktop-cal-icon"></i>
+              <i class="fa-solid fa-atom mobile-logo-icon"></i>
+            </div>
+            <div>
+              <h2 class="current-date-text" id="top-date-display">Today</h2>
+              <div class="live-clock" id="top-clock-display">00:00:00</div>
+            </div>
+          </div>
+
+          <!-- Top-Right Status Group: Streak & Sync/Sign In -->
+          <div class="header-status-group">
+            <button type="button" class="btn btn-outline nav-auth-btn" id="open-auth-modal-btn" title="Account & Cloud Sync">
+              <i class="fa-solid fa-circle-user text-cyan"></i>
+              <span id="nav-user-label">Account</span>
+            </button>
+            <div class="quick-pill minimal-streak-pill" id="quick-streak-pill" title="Current best active streak">
+              <i class="fa-solid fa-fire text-amber"></i>
+              <span id="top-best-streak">0d</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button type="button" class="btn btn-outline nav-achievements-btn" id="open-achievements-btn" title="View Achievements (Press 'A')">
+            <i class="fa-solid fa-trophy text-amber"></i>
+            <span>Achievements</span>
+            <span class="achievements-badge" id="achievements-unlocked-count">0</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-glow" id="open-habit-modal-btn" title="Add New Habit">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add New Habit</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Habits View -->
+      <section id="view-habits" class="app-view active">
+        <div class="glass-panel">
+          <div class="panel-header-full">
+            <div class="header-action-split">
+              <div>
+                <h2 class="view-title">Habits</h2>
+                <p class="view-subtitle">Track consistency with weekly 7-day dot grids, time-of-day routines, and consecutive streak preservation.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Habit Category Filters -->
+          <div class="filter-bar">
+            <div class="filter-chips" id="habit-filter-chips">
+              <button type="button" class="chip active" data-category="All">All Categories</button>
+              <button type="button" class="chip" data-category="Health">🍏 Health</button>
+              <button type="button" class="chip" data-category="Productivity">⚡ Productivity</button>
+              <button type="button" class="chip" data-category="Fitness">💪 Fitness</button>
+              <button type="button" class="chip" data-category="Learning">📚 Learning</button>
+              <button type="button" class="chip" data-category="Mind">🧘 Mind</button>
+            </div>
+            <div class="filter-meta">
+              <span id="habits-total-badge" class="count-badge">0 Habits Active</span>
+            </div>
+          </div>
+
+          <!-- Detailed Habits List -->
+          <div id="habits-grid" class="habits-container">
+            <div class="week-days-legend">
+              <span class="legend-title">Habit / Routine</span>
+              <div class="legend-days" id="week-days-labels">
+                <!-- Injected dynamically: Mon, Tue, Wed, Thu, Fri, Sat, Sun -->
+              </div>
+              <span class="legend-streak">Streak</span>
+              <span class="legend-actions">Actions</span>
+            </div>
+            <ul id="full-habits-list" class="habits-table-list">
+              <!-- Injected dynamically -->
+            </ul>
+            <div id="habits-empty" class="empty-state">
+              <i class="fa-regular fa-calendar-xmark"></i>
+              <h3>No habits in this category</h3>
+              <p>Click "Add New Habit" above to configure your daily routine.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= FLOATING UNIVERSAL CREATOR MODAL ================= -->
+  <div id="floating-creator-modal" class="floating-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="floating-modal-dialog">
+      <!-- Modal Header -->
+      <div class="floating-modal-header">
+        <div class="modal-title-with-icon">
+          <div class="modal-icon-badge" id="creator-modal-icon">
+            <i class="fa-solid fa-fire text-amber"></i>
+          </div>
+          <div>
+            <h3 class="floating-title" id="creator-modal-title">Create Daily Habit</h3>
+            <p class="floating-subtitle">Quickly capture and organize your life milestones</p>
+          </div>
+        </div>
+        <button type="button" class="floating-close-btn" id="creator-modal-close" aria-label="Close modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="creator-tab-nav">
+        <button type="button" class="creator-tab" data-tab="schedule">
+          <i class="fa-regular fa-calendar-plus"></i>
+          <span>Schedule</span>
+        </button>
+        <button type="button" class="creator-tab active" data-tab="habit">
+          <i class="fa-solid fa-fire"></i>
+          <span>Habit</span>
+        </button>
+        <button type="button" class="creator-tab" data-tab="task">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Task</span>
+        </button>
+        <button type="button" class="creator-tab" data-tab="finance">
+          <i class="fa-solid fa-indian-rupee-sign"></i>
+          <span>Transaction</span>
+        </button>
+        <button type="button" class="creator-tab" data-tab="goal">
+          <i class="fa-solid fa-bullseye"></i>
+          <span>Goal</span>
+        </button>
+      </div>
+
+      <!-- Modal Body Panels -->
+      <div class="floating-modal-body">
+        <!-- 0. SCHEDULE TIME BLOCK CREATOR FORM -->
+        <form id="modal-schedule-form" class="creator-panel">
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-sch-title">Event Title <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <i class="fa-regular fa-clock input-icon text-amber"></i>
+              <input 
+                type="text" 
+                id="modal-sch-title" 
+                placeholder="e.g. Deep Work on API, Team Sync, Gym Workout, Reading..." 
+                maxlength="70"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Date Picker -->
+            <div class="floating-field-group">
+              <label class="field-label" for="modal-sch-date">Scheduled Date <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fa-regular fa-calendar input-icon text-cyan"></i>
+                <input type="date" id="modal-sch-date" required>
+              </div>
+            </div>
+
+            <!-- Start Hour Picker -->
+            <div class="floating-field-group">
+              <label class="field-label" for="modal-sch-hour">Start Time <span class="required">*</span></label>
+              <div class="select-wrapper time-select-wrapper">
+                <i class="fa-regular fa-clock input-icon text-amber"></i>
+                <select id="modal-sch-hour" class="styled-time-select" required>
+                  <optgroup label="Morning">
+                    <option value="5">05:00 AM</option>
+                    <option value="6">06:00 AM</option>
+                    <option value="7">07:00 AM</option>
+                    <option value="8">08:00 AM</option>
+                    <option value="9" selected>09:00 AM</option>
+                    <option value="10">10:00 AM</option>
+                    <option value="11">11:00 AM</option>
+                  </optgroup>
+                  <optgroup label="Afternoon">
+                    <option value="12">12:00 PM</option>
+                    <option value="13">01:00 PM</option>
+                    <option value="14">02:00 PM</option>
+                    <option value="15">03:00 PM</option>
+                    <option value="16">04:00 PM</option>
+                    <option value="17">05:00 PM</option>
+                  </optgroup>
+                  <optgroup label="Evening &amp; Night">
+                    <option value="18">06:00 PM</option>
+                    <option value="19">07:00 PM</option>
+                    <option value="20">08:00 PM</option>
+                    <option value="21">09:00 PM</option>
+                    <option value="22">10:00 PM</option>
+                    <option value="23">11:00 PM</option>
+                  </optgroup>
+                </select>
+                <i class="fa-solid fa-chevron-down select-chevron"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Duration -->
+            <div class="floating-field-group">
+              <label class="field-label">Duration</label>
+              <div class="chip-select-group" id="modal-sch-duration-group">
+                <button type="button" class="mini-chip active" data-val="1">1 Hour</button>
+                <button type="button" class="mini-chip" data-val="2">2 Hours</button>
+                <button type="button" class="mini-chip" data-val="3">3 Hours</button>
+              </div>
+              <input type="hidden" id="modal-sch-duration" value="1">
+            </div>
+
+            <!-- Category -->
+            <div class="floating-field-group">
+              <label class="field-label">Category</label>
+              <div class="chip-select-group" id="modal-sch-cat-group">
+                <button type="button" class="mini-chip active" data-val="Work">💼 Work</button>
+                <button type="button" class="mini-chip" data-val="Health">🏃 Health</button>
+                <button type="button" class="mini-chip" data-val="Meeting">👥 Meeting</button>
+                <button type="button" class="mini-chip" data-val="Personal">🛋️ Personal</button>
+              </div>
+              <input type="hidden" id="modal-sch-category" value="Work">
+            </div>
+          </div>
+
+          <!-- Frequency & Days Options -->
+          <div class="floating-field-group">
+            <label class="field-label">Repeat Schedule</label>
+            <div class="chip-select-group" id="modal-sch-repeat-group">
+              <button type="button" class="mini-chip active" data-repeat="once">Single Date</button>
+              <button type="button" class="mini-chip" data-repeat="everyday"><i class="fa-solid fa-repeat"></i> Everyday</button>
+              <button type="button" class="mini-chip" data-repeat="selected_days"><i class="fa-solid fa-calendar-week"></i> Selected Days</button>
+            </div>
+            <input type="hidden" id="modal-sch-repeat" value="once">
+          </div>
+
+          <!-- Active Days Selector (Shown when 'Selected Days' is active) -->
+          <div class="floating-field-group" id="modal-sch-days-container" style="display: none;">
+            <label class="field-label">Repeat on Days of Week <span class="optional">(Click to toggle)</span></label>
+            <div class="day-picker-chips" id="modal-sch-days-picker">
+              <button type="button" class="day-chip active" data-day="Mon">Mon</button>
+              <button type="button" class="day-chip active" data-day="Tue">Tue</button>
+              <button type="button" class="day-chip active" data-day="Wed">Wed</button>
+              <button type="button" class="day-chip active" data-day="Thu">Thu</button>
+              <button type="button" class="day-chip active" data-day="Fri">Fri</button>
+              <button type="button" class="day-chip" data-day="Sat">Sat</button>
+              <button type="button" class="day-chip" data-day="Sun">Sun</button>
+            </div>
+          </div>
+
+          <div class="modal-footer-actions">
+            <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-amber btn-glow">
+              <i class="fa-regular fa-calendar-plus"></i>
+              <span>Schedule Event</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- 1. HABIT CREATOR FORM -->
+        <form id="modal-habit-form" class="creator-panel active">
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-habit-name">Habit Name <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-fire input-icon text-amber"></i>
+              <input 
+                type="text" 
+                id="modal-habit-name" 
+                placeholder="e.g. Read 20 mins, Cold shower, Morning yoga..." 
+                maxlength="60"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Category Chips -->
+            <div class="floating-field-group">
+              <label class="field-label">Category</label>
+              <div class="chip-select-group" id="modal-habit-category-group">
+                <button type="button" class="mini-chip active" data-val="Health">🍏 Health</button>
+                <button type="button" class="mini-chip" data-val="Productivity">⚡ Productivity</button>
+                <button type="button" class="mini-chip" data-val="Fitness">💪 Fitness</button>
+                <button type="button" class="mini-chip" data-val="Learning">📚 Learning</button>
+                <button type="button" class="mini-chip" data-val="Mind">🧘 Mind</button>
+                <button type="button" class="mini-chip" data-val="General">⭐ General</button>
+              </div>
+              <input type="hidden" id="modal-habit-category" value="Health">
+            </div>
+
+            <!-- Routine / Time of Day -->
+            <div class="floating-field-group">
+              <label class="field-label">Preferred Routine</label>
+              <div class="chip-select-group" id="modal-habit-routine-group">
+                <button type="button" class="mini-chip active" data-val="Morning">🌅 Morning</button>
+                <button type="button" class="mini-chip" data-val="Afternoon">☀️ Afternoon</button>
+                <button type="button" class="mini-chip" data-val="Evening">🌙 Evening</button>
+                <button type="button" class="mini-chip" data-val="Anytime">⏰ Anytime</button>
+              </div>
+              <input type="hidden" id="modal-habit-routine" value="Morning">
+            </div>
+          </div>
+
+          <!-- Motivation / Purpose -->
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-habit-motivation">Why is this habit important? <span class="optional">(Optional)</span></label>
+            <input 
+              type="text" 
+              id="modal-habit-motivation" 
+              class="styled-sub-input"
+              placeholder="e.g. To sharpen mental clarity and maintain sustained energy..." 
+              maxlength="100"
+            >
+          </div>
+
+          <!-- Color Accent Picker -->
+          <div class="floating-field-group">
+            <label class="field-label">Glow Accent</label>
+            <div class="color-swatches" id="modal-habit-color-group">
+              <button type="button" class="color-swatch active swatch-emerald" data-color="emerald" title="Emerald Green"></button>
+              <button type="button" class="color-swatch swatch-cyan" data-color="cyan" title="Electric Cyan"></button>
+              <button type="button" class="color-swatch swatch-amber" data-color="amber" title="Flame Amber"></button>
+              <button type="button" class="color-swatch swatch-violet" data-color="violet" title="Deep Violet"></button>
+              <button type="button" class="color-swatch swatch-rose" data-color="rose" title="Rose Red"></button>
+            </div>
+            <input type="hidden" id="modal-habit-color" value="emerald">
+          </div>
+
+          <!-- Actions -->
+          <div class="modal-footer-actions">
+            <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-glow">
+              <i class="fa-solid fa-sparkles"></i>
+              <span>Launch Habit</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- 2. TASK CREATOR FORM -->
+        <form id="modal-task-form" class="creator-panel">
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-task-title">Task Title <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-circle-check input-icon text-cyan"></i>
+              <input 
+                type="text" 
+                id="modal-task-title" 
+                placeholder="What critical action needs to be accomplished?" 
+                maxlength="90"
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Priority Selector Visual Cards -->
+          <div class="floating-field-group">
+            <label class="field-label">Urgency & Priority</label>
+            <div class="priority-cards-grid" id="modal-task-priority-group">
+              <div class="priority-choice-card card-high" data-priority="high">
+                <div class="p-dot dot-high"></div>
+                <div class="p-info">
+                  <span class="p-title">High Priority</span>
+                  <span class="p-sub">Urgent & Critical</span>
+                </div>
+              </div>
+              <div class="priority-choice-card card-medium active" data-priority="medium">
+                <div class="p-dot dot-medium"></div>
+                <div class="p-info">
+                  <span class="p-title">Medium Priority</span>
+                  <span class="p-sub">Standard Flow</span>
+                </div>
+              </div>
+              <div class="priority-choice-card card-low" data-priority="low">
+                <div class="p-dot dot-low"></div>
+                <div class="p-info">
+                  <span class="p-title">Low Priority</span>
+                  <span class="p-sub">Flexible / Minor</span>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" id="modal-task-priority" value="medium">
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Category -->
+            <div class="floating-field-group">
+              <label class="field-label">Category</label>
+              <div class="chip-select-group" id="modal-task-category-group">
+                <button type="button" class="mini-chip active" data-val="Work">💼 Work</button>
+                <button type="button" class="mini-chip" data-val="Personal">👤 Personal</button>
+                <button type="button" class="mini-chip" data-val="Finance">💰 Finance</button>
+                <button type="button" class="mini-chip" data-val="Health">🍏 Health</button>
+              </div>
+              <input type="hidden" id="modal-task-category" value="Work">
+            </div>
+
+            <!-- Estimated Effort -->
+            <div class="floating-field-group">
+              <label class="field-label">Estimated Effort</label>
+              <div class="chip-select-group" id="modal-task-effort-group">
+                <button type="button" class="mini-chip" data-val="15m">⚡ 15m Quick</button>
+                <button type="button" class="mini-chip active" data-val="30m">⏱️ 30m Standard</button>
+                <button type="button" class="mini-chip" data-val="60m">⏳ 1h Deep</button>
+                <button type="button" class="mini-chip" data-val="2h+">🚀 2h+ Project</button>
+              </div>
+              <input type="hidden" id="modal-task-effort" value="30m">
+            </div>
+          </div>
+
+          <!-- Notes / Subtext -->
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-task-notes">Key Notes / Milestone Target <span class="optional">(Optional)</span></label>
+            <input 
+              type="text" 
+              id="modal-task-notes" 
+              class="styled-sub-input"
+              placeholder="e.g. Include quarterly metrics and attach spreadsheet link..." 
+              maxlength="120"
+            >
+          </div>
+
+          <!-- Actions -->
+          <div class="modal-footer-actions">
+            <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-cyan btn-glow">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Task to Flow</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- 3. TRANSACTION CREATOR FORM (₹) -->
+        <form id="modal-finance-form" class="creator-panel">
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-tx-desc">Description / Merchant <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-receipt input-icon text-amber"></i>
+              <input 
+                type="text" 
+                id="modal-tx-desc" 
+                placeholder="e.g. Groceries & fruits, Freelance milestone, Electric bill..." 
+                maxlength="60"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Amount in Rupees (₹) -->
+            <div class="floating-field-group">
+              <label class="field-label" for="modal-tx-amount">Amount in Rupees (₹) <span class="required">*</span></label>
+              <div class="rupee-input-wrapper has-steppers">
+                <span class="rupee-symbol-badge">₹</span>
+                <input 
+                  type="number" 
+                  id="modal-tx-amount" 
+                  placeholder="0" 
+                  step="1" 
+                  min="1" 
+                  required
+                >
+                <div class="stepper-buttons-group">
+                  <button type="button" class="amount-stepper-btn amount-stepper-dec" id="tx-amount-dec" aria-label="Decrease amount by 1" title="Decrease ₹1">
+                    <i class="fa-solid fa-minus"></i>
+                  </button>
+                  <button type="button" class="amount-stepper-btn amount-stepper-inc" id="tx-amount-inc" aria-label="Increase amount by 1" title="Increase ₹1">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transaction Type -->
+            <div class="floating-field-group">
+              <label class="field-label">Type</label>
+              <div class="chip-select-group" id="modal-tx-type-group">
+                <button type="button" class="mini-chip active type-expense" data-val="expense">📉 Expense</button>
+                <button type="button" class="mini-chip type-income" data-val="income">📈 Income</button>
+              </div>
+              <input type="hidden" id="modal-tx-type" value="expense">
+            </div>
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Category -->
+            <div class="floating-field-group">
+              <label class="field-label">Category</label>
+              <div class="chip-select-group" id="modal-tx-cat-group">
+                <button type="button" class="mini-chip" data-val="Income">💰 Income</button>
+                <button type="button" class="mini-chip active" data-val="Food">🍔 Food</button>
+                <button type="button" class="mini-chip" data-val="Business">💼 Business</button>
+                <button type="button" class="mini-chip" data-val="Leisure">🎮 Leisure</button>
+                <button type="button" class="mini-chip" data-val="Bills">⚡ Bills</button>
+                <button type="button" class="mini-chip" data-val="Health">💊 Health</button>
+                <button type="button" class="mini-chip" data-val="Other">🏷️ Other</button>
+              </div>
+              <input type="hidden" id="modal-tx-category" value="Food">
+            </div>
+
+            <!-- Payment Method -->
+            <div class="floating-field-group">
+              <label class="field-label">Payment Mode</label>
+              <div class="chip-select-group" id="modal-tx-method-group">
+                <button type="button" class="mini-chip active" data-val="UPI">📱 UPI</button>
+                <button type="button" class="mini-chip" data-val="Cash">💵 Cash</button>
+                <button type="button" class="mini-chip" data-val="Card">💳 Card</button>
+                <button type="button" class="mini-chip" data-val="Net Banking">🏦 Net Banking</button>
+              </div>
+              <input type="hidden" id="modal-tx-method" value="UPI">
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="modal-footer-actions">
+            <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-amber btn-glow">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+              <span>Record Transaction</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- 4. STRATEGIC GOAL CREATOR FORM -->
+        <form id="modal-goal-form" class="creator-panel">
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-goal-title">Goal Title <span class="required">*</span></label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-bullseye input-icon text-violet"></i>
+              <input type="text" id="modal-goal-title"
+                placeholder="e.g. Run 10km Marathon, Build Emergency Fund, Launch MVP..." maxlength="80" required>
+            </div>
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Category -->
+            <div class="floating-field-group">
+              <label class="field-label">Category</label>
+              <div class="chip-select-group" id="modal-goal-category-group">
+                <button type="button" class="mini-chip active" data-val="Career">💼 Career</button>
+                <button type="button" class="mini-chip" data-val="Health">🏃 Health</button>
+                <button type="button" class="mini-chip" data-val="Finance">💰 Finance</button>
+                <button type="button" class="mini-chip" data-val="Learning">📚 Learning</button>
+                <button type="button" class="mini-chip" data-val="Personal">🛋️ Personal</button>
+              </div>
+              <input type="hidden" id="modal-goal-category" value="Career">
+            </div>
+
+            <!-- Target Date -->
+            <div class="floating-field-group">
+              <label class="field-label" for="modal-goal-date">Target Date <span class="required">*</span></label>
+              <div class="input-wrapper">
+                <i class="fa-regular fa-calendar input-icon text-violet"></i>
+                <input type="date" id="modal-goal-date" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="floating-field-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="field-label" style="margin-bottom: 0;">Initial Progress</label>
+              <span id="modal-goal-progress-display" style="font-size: 0.85rem; font-weight: 700; color: var(--violet); font-family: var(--font-mono);">0%</span>
+            </div>
+            <input type="range" id="modal-goal-progress" min="0" max="100" value="0" aria-label="Goal progress percentage" style="width: 100%; accent-color: var(--violet); cursor: pointer;">
+          </div>
+
+          <div class="floating-grid-2">
+            <!-- Key Metrics / Target Indicator -->
+            <div class="floating-field-group">
+              <label class="field-label" for="modal-goal-metrics">Target Metric <span class="optional">(Optional)</span></label>
+              <input type="text" id="modal-goal-metrics" class="styled-sub-input"
+                placeholder="e.g. ₹1,00,000 saved, 10km under 55m" maxlength="60">
+            </div>
+
+            <!-- Milestones (comma-separated) -->
+            <div class="floating-field-group">
+              <label class="field-label" for="modal-goal-milestones">Milestones <span class="optional">(Comma-separated)</span></label>
+              <input type="text" id="modal-goal-milestones" class="styled-sub-input"
+                placeholder="e.g. Phase 1, Phase 2, Launch" maxlength="100">
+            </div>
+          </div>
+
+          <!-- Description / Strategy Notes -->
+          <div class="floating-field-group">
+            <label class="field-label" for="modal-goal-desc">Strategy / Motivation <span class="optional">(Optional)</span></label>
+            <input type="text" id="modal-goal-desc" class="styled-sub-input"
+              placeholder="e.g. Train aerobic base 3x weekly with interval sprints..." maxlength="140">
+          </div>
+
+          <!-- Actions -->
+          <div class="modal-footer-actions">
+            <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+            <button type="submit" class="btn btn-violet btn-glow" style="background: var(--violet); color: #fff; border-color: var(--violet);">
+              <i class="fa-solid fa-bullseye"></i>
+              <span>Activate Life Goal</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fixed Mobile Bottom Navigation Bar (Touch-friendly, min 48px tap targets) -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+    <a href="../index.html" class="mobile-nav-item" id="mob-nav-dashboard" title="Dashboard">
+      <i class="fa-solid fa-layer-group"></i>
+      <span>Home</span>
+    </a>
+    <a href="habits.html" class="mobile-nav-item active" id="mob-nav-habits" title="Habits">
+      <i class="fa-solid fa-fire-flame-curved"></i>
+      <span>Habits</span>
+    </a>
+    <a href="tasks.html" class="mobile-nav-item" id="mob-nav-tasks" title="Tasks">
+      <i class="fa-solid fa-list-check"></i>
+      <span>Tasks</span>
+    </a>
+    <a href="calendar.html" class="mobile-nav-item" id="mob-nav-calendar" title="Calendar">
+      <i class="fa-regular fa-calendar-days"></i>
+      <span>Calendar</span>
+    </a>
+    <a href="finances.html" class="mobile-nav-item" id="mob-nav-finances" title="Finances">
+      <i class="fa-solid fa-wallet"></i>
+      <span>Finance</span>
+    </a>
+    <a href="goals.html" class="mobile-nav-item" id="mob-nav-goals" title="Goals">
+      <i class="fa-solid fa-bullseye"></i>
+      <span>Goals</span>
+    </a>
+    <a href="analytics.html" class="mobile-nav-item" id="mob-nav-analytics" title="Analytics">
+      <i class="fa-solid fa-star"></i>
+      <span>Stats</span>
+    </a>
+    <a href="journal.html" class="mobile-nav-item" id="mob-nav-journal" title="Journal">
+      <i class="fa-solid fa-book-bookmark"></i>
+      <span>Journal</span>
+    </a>
+    <a href="settings.html" class="mobile-nav-item" id="mob-nav-settings" title="Settings">
+      <i class="fa-solid fa-gear"></i>
+      <span>Settings</span>
+    </a>
+  </nav>
+
+  <script src="../js/sampleData.js"></script>
+  <script src="../script.js?v=2.2"></script>
+</body>
+</html>

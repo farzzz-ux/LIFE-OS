@@ -1,0 +1,42 @@
+{
+  "name": "life-os-tracker",
+  "version": "1.0.0",
+  "description": "Production-ready, full-stack dark-themed Life Command Center with real-time atomic JSON persistence, accurate weighted Life Score analytics, and dual-layer state synchronization.",
+  "main": "server.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "dev": "nodemon server.cjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "migrate": "node src/db/migrate.cjs",
+    "backup": "node scripts/backup-db.cjs"
+  },
+  "keywords": [
+    "life-os",
+    "habit-tracker",
+    "task-management",
+    "finance-tracker",
+    "life-score",
+    "analytics",
+    "rest-api",
+    "productivity"
+  ],
+  "author": "LifeOS Engineering",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "sanitize-html": "^2.18.0",
+    "zod": "^4.6.5"
+  }
+}
