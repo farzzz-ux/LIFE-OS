@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # LIFE OS — Production Multi-Stage Dockerfile
 # Optimized for security, small image footprint, and non-root execution.
 # ==============================================================================
@@ -12,7 +12,7 @@ WORKDIR /app
 RUN apk add --no-cache python3 make g++
 
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # STAGE 2: Minimal Production Runtime
 FROM node:20-alpine AS runner
@@ -33,10 +33,12 @@ COPY src ./src
 COPY js ./js
 COPY pages ./pages
 COPY scripts ./scripts
+COPY data ./data
 COPY index.html ./
 COPY script.js ./
 COPY style.css ./
 COPY server.cjs ./
+COPY favicon.svg ./
 
 # Create data directory with write permissions for non-root user
 RUN mkdir -p /app/data /app/data/backups && chown -R node:node /app
@@ -52,4 +54,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
 # Start production server
-CMD ["node", "server.cjs"]
+CMD [node, server.cjs]
