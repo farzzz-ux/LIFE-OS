@@ -10051,3 +10051,32 @@ button, .btn, [role="button"], .creator-tab, .mini-chip, .day-chip, .ach-filter-
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* ==========================================================================
+   Instant Top Navigation Progress Bar & Tactile Feedback
+   ========================================================================== */
+#top-page-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.9), 0 0 6px rgba(192, 132, 252, 0.6);
+  z-index: 9999999;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: 0 2px 2px 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+#top-page-progress-bar.active {
+  opacity: 1;
+}
+
+.nav-item.nav-item-tapping,
+.mobile-nav-item.nav-item-tapping {
+  transform: scale(0.96) !important;
+  opacity: 0.8 !important;
+  transition: transform 0.1s ease, opacity 0.1s ease !important;
+}

@@ -5421,6 +5421,7 @@ async function handleAuthSubmit(event) {
 
   // Submit button loading state & lock
   window.__isAuthSubmitting = true;
+  startTopProgressBar();
   const submitBtn = document.getElementById('auth-submit-btn');
   const submitLabel = document.getElementById('auth-submit-label');
   const submitIcon = document.getElementById('auth-submit-icon');
@@ -5446,6 +5447,7 @@ async function handleAuthSubmit(event) {
     showAuthError(err.message || 'Authentication failed. Please verify credentials.');
   } finally {
     hideAuthColdStartIndicator();
+    finishTopProgressBar();
     window.__isAuthSubmitting = false;
     if (submitBtn) submitBtn.disabled = false;
     if (submitLabel) submitLabel.textContent = originalLabel;
@@ -8389,6 +8391,74 @@ function updateActiveSidebarNav() {
   });
 }
 
+
+/* ==========================================================================
+   INSTANT TOP NAVIGATION PROGRESS BAR
+   Provides immediate visual feedback on taps & handles server wake-up times.
+   ========================================================================== */
+let _topProgressBarTimer = null;
+let _topProgressBarColdStartTimer = null;
+
+function getOrCreateTopProgressBar() {
+  if (typeof document === 'undefined') return null;
+  let bar = document.getElementById('top-page-progress-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'top-page-progress-bar';
+    document.body.appendChild(bar);
+  }
+  return bar;
+}
+
+function startTopProgressBar() {
+  if (typeof document === 'undefined') return;
+  const bar = getOrCreateTopProgressBar();
+  if (!bar) return;
+
+  clearTimeout(_topProgressBarTimer);
+  clearTimeout(_topProgressBarColdStartTimer);
+
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+  bar.style.opacity = '1';
+
+  // Force reflow
+  void bar.offsetWidth;
+
+  bar.style.transition = 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease';
+  bar.style.width = '30%';
+
+  _topProgressBarTimer = setTimeout(() => {
+    bar.style.transition = 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+    bar.style.width = '75%';
+  }, 220);
+
+  // If server takes > 2.5s to respond (Render free container cold boot), notify user gracefully
+  _topProgressBarColdStartTimer = setTimeout(() => {
+    if (typeof showToast === 'function') {
+      showToast('Waking up cloud server, loading page...', 'info');
+    }
+  }, 2500);
+}
+
+function finishTopProgressBar() {
+  if (typeof document === 'undefined') return;
+  clearTimeout(_topProgressBarTimer);
+  clearTimeout(_topProgressBarColdStartTimer);
+  const bar = document.getElementById('top-page-progress-bar');
+  if (!bar) return;
+
+  bar.style.transition = 'width 0.16s ease-out, opacity 0.22s ease 0.16s';
+  bar.style.width = '100%';
+
+  setTimeout(() => {
+    bar.style.opacity = '0';
+    setTimeout(() => {
+      bar.style.width = '0%';
+    }, 280);
+  }, 180);
+}
+
 async function loadPageContent(urlPath, animate = true) {
   try {
     const cleanPath = normalizeSpaPath(urlPath);
@@ -8477,12 +8547,18 @@ async function loadPageContent(urlPath, animate = true) {
     if (document.getElementById('finances-container') || document.getElementById('transactions-list')) {
       initFinances();
     }
+    // Auto-init Settings without requiring page refresh
+    if (document.getElementById('view-settings') || document.getElementById('settings-sync-status') || document.getElementById('settings-sync-btn') || document.getElementById('export-json-btn')) {
+      initSettings();
+    }
 
     renderPage();
     playSound('click');
   } catch (err) {
     console.error('[SPA Navigation Error]:', err);
     window.location.href = urlPath;
+  } finally {
+    finishTopProgressBar();
   }
 }
 
@@ -8529,6 +8605,10 @@ function initSpaRouter() {
       }
 
       // Immediate visual feedback on tapped navigation button
+      startTopProgressBar();
+      link.classList.add('nav-item-tapping');
+      setTimeout(() => link.classList.remove('nav-item-tapping'), 200);
+
       const cleanPath = normalizeSpaPath(targetUrl.pathname);
       document.querySelectorAll('.mobile-bottom-nav .mobile-nav-item, .nav-menu .nav-item').forEach(item => {
         if (item === link || item.contains(link)) {
@@ -8786,6 +8866,8 @@ if (typeof window !== 'undefined') {
   window.closeAchievementsModal = closeAchievementsModal;
   window.initModalSwipeDownGestures = initModalSwipeDownGestures;
   window.initSettings = initSettings;
+  window.startTopProgressBar = startTopProgressBar;
+  window.finishTopProgressBar = finishTopProgressBar;
   window.renderSettingsView = renderSettingsView;
   window.ensureDoubleCheckModal = ensureDoubleCheckModal;
   window.openDoubleCheckModal = openDoubleCheckModal;
