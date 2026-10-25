@@ -9,7 +9,7 @@ const { AUTH_RATE_LIMIT_MAX, API_RATE_LIMIT_MAX, NODE_ENV } = require('../config
 // Sensitive auth limiter (login, register, reset-password)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'test' ? 1000 : AUTH_RATE_LIMIT_MAX,
+  max: NODE_ENV === 'test' ? 1000 : Math.max(AUTH_RATE_LIMIT_MAX, 150),
   standardHeaders: true,
   legacyHeaders: false,
   message: {

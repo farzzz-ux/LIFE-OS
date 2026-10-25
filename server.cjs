@@ -44,6 +44,9 @@ initSchema();
 
 const app = express();
 
+// Trust reverse proxy (AWS Cloudflare / ALB / Render)
+app.set('trust proxy', 1);
+
 // ==========================================
 // SECURITY HEADERS & CORS
 // ==========================================
@@ -86,18 +89,18 @@ app.use(sanitizeInput);
 
 // Health check endpoint for Render & Docker container health monitoring
 app.get(['/health', '/api/health'], (req, res) => {
-  res.status(200).json({ status: 'ok', uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'healthy', ok: true, uptime: Math.floor(process.uptime()), timestamp: new Date().toISOString() });
 });
 
 // ==========================================
 // API ROUTES WITH AUTH & TENANT RESOLUTION
 // ==========================================
-// Apply general API rate limiting & tenant resolution to /api
+// Mount public authentication sub-router first (login, register, logout, reset-password)
+app.use('/api/auth', authRoutes);
+
+// Apply general API rate limiting & tenant resolution to protected /api
 app.use('/api', apiLimiter);
 app.use('/api', authMiddleware);
-
-// Mount modular sub-routers
-app.use('/api/auth', authRoutes);
 app.use('/api/tasks', tasksRoutes);
 app.use('/api/habits', habitsRoutes);
 app.use('/api/finances', financesRoutes);

@@ -10,7 +10,7 @@ const { UserRepository, UserDataRepository } = require('../db/repository.cjs');
 const { JWT_SECRET } = require('../config/env.cjs');
 const { authLimiter } = require('../middleware/rateLimiter.cjs');
 const { validateRequest, registerSchema, loginSchema } = require('../middleware/validateRequest.cjs');
-const { requireAuth } = require('../middleware/authMiddleware.cjs');
+const { requireAuth, authMiddleware } = require('../middleware/authMiddleware.cjs');
 
 const router = express.Router();
 
@@ -137,7 +137,7 @@ router.post('/login', authLimiter, validateRequest(loginSchema), async (req, res
 /**
  * GET /api/auth/me
  */
-router.get('/me', requireAuth, (req, res, next) => {
+router.get('/me', authMiddleware, requireAuth, (req, res, next) => {
   try {
     const user = UserRepository.findById(req.user.id);
     if (!user) {

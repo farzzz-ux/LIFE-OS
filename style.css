@@ -10021,3 +10021,33 @@ body {
     letter-spacing: -0.02em !important;
   }
 }
+
+
+/* ==========================================================================
+   Cold-Start Server Status & Button Touch Optimization
+   ========================================================================== */
+.auth-cold-start-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  border-radius: var(--radius-md);
+  color: #38bdf8;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+  animation: pulseColdStart 2s infinite ease-in-out;
+}
+
+@keyframes pulseColdStart {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.6; }
+}
+
+button, .btn, [role="button"], .creator-tab, .mini-chip, .day-chip, .ach-filter-chip, .mobile-nav-item {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}

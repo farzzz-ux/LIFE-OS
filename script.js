@@ -6,6 +6,14 @@
 
 // Storage & API Configuration
 const STORAGE_KEY = 'life_os_state_v6';
+
+// Warm up sleeping backend container immediately on initial page load (Render free tier)
+if (typeof window !== 'undefined' && typeof fetch === 'function') {
+  try {
+    fetch(`${API_BASE}/api/health`, { method: 'GET', cache: 'no-store' }).catch(() => {});
+  } catch (e) {}
+}
+
 const API_BASE = (() => {
   if (typeof window !== 'undefined' && window.location) {
     if ((window.location.protocol === 'http:' || window.location.protocol === 'https:') && (window.location.port === '3000' || !window.location.port)) {
@@ -30,7 +38,7 @@ const safeListener = (id, event, handler) => {
  * Centralizes API requests, automatically includes the JWT token, and handles errors gracefully.
  */
 async function apiRequest(endpoint, options = {}) {
-  const token = (typeof localStorage !== 'undefined') ? localStorage.getItem('token') : null;
+  const token = (typeof localStorage !== 'undefined') ? (localStorage.getItem('life_os_auth_token') || localStorage.getItem('token')) : null;
   const defaultHeaders = {
     'Content-Type': 'application/json',
     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -5185,7 +5193,7 @@ function ensureAuthModal() {
           </div>
 
           <!-- Main Auth Form -->
-          <form id="auth-form" class="auth-form" onsubmit="handleAuthSubmit(event)" novalidate>
+          <form id="auth-form" class="auth-form" novalidate>
             <!-- Username / Name (Only visible in register mode) -->
             <div class="form-group auth-field-group" id="auth-name-group" style="display: none;">
               <label class="field-label" for="auth-reg-name">Username (Max 6 letters) <span class="required" style="color: var(--rose);">*</span></label>
@@ -5353,7 +5361,14 @@ async function handleAuthSubmit(event) {
     event.preventDefault();
   }
 
+  // Strict atomic re-entrancy lock to prevent duplicate parallel submissions
+  if (window.__isAuthSubmitting) {
+    console.warn('[LifeOS Auth] Submit already in flight. Ignoring duplicate trigger.');
+    return;
+  }
+
   hideAuthError();
+  hideAuthColdStartIndicator();
 
   const regTab = document.getElementById('auth-tab-register');
   const isRegister = regTab && regTab.classList.contains('active');
@@ -5404,7 +5419,8 @@ async function handleAuthSubmit(event) {
     return;
   }
 
-  // Submit button loading state
+  // Submit button loading state & lock
+  window.__isAuthSubmitting = true;
   const submitBtn = document.getElementById('auth-submit-btn');
   const submitLabel = document.getElementById('auth-submit-label');
   const submitIcon = document.getElementById('auth-submit-icon');
@@ -5415,6 +5431,11 @@ async function handleAuthSubmit(event) {
   if (submitLabel) submitLabel.textContent = isRegister ? 'Creating Account...' : 'Signing In...';
   if (submitIcon) submitIcon.className = 'fa-solid fa-spinner fa-spin';
 
+  // Display status indicator if request takes > 2.5s (e.g. Render free instance cold-boot)
+  _authColdStartTimer = setTimeout(() => {
+    showAuthColdStartIndicator('⚡ Cloud server is waking up (Render free tier spin-up, please hold on a few seconds)...');
+  }, 2500);
+
   try {
     if (isRegister) {
       await registerUser(email, password, name.slice(0, 6));
@@ -5424,6 +5445,8 @@ async function handleAuthSubmit(event) {
   } catch (err) {
     showAuthError(err.message || 'Authentication failed. Please verify credentials.');
   } finally {
+    hideAuthColdStartIndicator();
+    window.__isAuthSubmitting = false;
     if (submitBtn) submitBtn.disabled = false;
     if (submitLabel) submitLabel.textContent = originalLabel;
     if (submitIcon) submitIcon.className = originalIconClass;
@@ -5468,19 +5491,93 @@ function closeAuthModal() {
   hideAuthError();
 }
 
+// Cold-Start & Network Resilient Auth Request Utility
+let _authColdStartTimer = null;
+function showAuthColdStartIndicator(msg = '⚡ Cloud server is waking up (Render free tier spin-up, please hold on a few seconds)...') {
+  let indicator = document.getElementById('auth-cold-start-banner');
+  if (!indicator) {
+    indicator = document.createElement('div');
+    indicator.id = 'auth-cold-start-banner';
+    indicator.className = 'auth-cold-start-banner';
+    const form = document.getElementById('auth-form');
+    if (form) {
+      const actionGroup = form.querySelector('.auth-action-group');
+      if (actionGroup) form.insertBefore(indicator, actionGroup);
+      else form.appendChild(indicator);
+    }
+  }
+  if (indicator) {
+    indicator.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${msg}</span>`;
+    indicator.style.display = 'flex';
+  }
+}
+
+function hideAuthColdStartIndicator() {
+  clearTimeout(_authColdStartTimer);
+  const indicator = document.getElementById('auth-cold-start-banner');
+  if (indicator) indicator.style.display = 'none';
+}
+
+async function authFetchWithRetry(url, options) {
+  const maxAttempts = 3;
+  let attempt = 0;
+  let lastError = null;
+
+  while (attempt < maxAttempts) {
+    attempt++;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      // Render free tier waking up can return 502, 503, 504 gateway errors
+      if ([502, 503, 504].includes(res.status)) {
+        if (attempt < maxAttempts) {
+          showAuthColdStartIndicator(`Server is spinning up... Reconnecting (attempt ${attempt}/${maxAttempts})...`);
+          await new Promise(r => setTimeout(r, 2800));
+          continue;
+        }
+      }
+
+      let data = {};
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        try { data = JSON.parse(text); } catch (e) { data = { error: text || `HTTP ${res.status}` }; }
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `Request failed with status ${res.status}`);
+      }
+      return data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      lastError = err;
+      if (attempt < maxAttempts && (err.name === 'AbortError' || err.name === 'TypeError' || (err.message && err.message.includes('fetch')))) {
+        showAuthColdStartIndicator(`Cloud server is booting up... Reconnecting (attempt ${attempt}/${maxAttempts})...`);
+        await new Promise(r => setTimeout(r, 2800));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastError || new Error('Authentication request timed out. Please try again.');
+}
+
 async function registerUser(email, password, name = '') {
   try {
-    const res = await fetch(`${API_BASE}/api/auth/register`, {
+    const data = await authFetchWithRetry(`${API_BASE}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name, initialData: appState })
     });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
     if (data.token) {
       localStorage.setItem('life_os_auth_token', data.token);
+      localStorage.setItem('token', data.token);
       localStorage.setItem('life_os_auth_user', JSON.stringify(data.user));
       showToast(`Welcome, ${data.user.name || 'Commander'}! Account created.`, 'success');
       closeAuthModal();
@@ -5496,17 +5593,14 @@ async function registerUser(email, password, name = '') {
 
 async function loginUser(email, password) {
   try {
-    const res = await fetch(`${API_BASE}/api/auth/login`, {
+    const data = await authFetchWithRetry(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Invalid credentials');
-    }
     if (data.token) {
       localStorage.setItem('life_os_auth_token', data.token);
+      localStorage.setItem('token', data.token);
       localStorage.setItem('life_os_auth_user', JSON.stringify(data.user));
       showToast(`Welcome back, ${data.user.name || data.user.email}!`, 'success');
       closeAuthModal();
@@ -5523,6 +5617,7 @@ async function loginUser(email, password) {
 function logoutUser() {
   try {
     localStorage.removeItem('life_os_auth_token');
+    localStorage.removeItem('token');
     localStorage.removeItem('life_os_auth_user');
   } catch (e) {}
   showToast('Logged out of cloud account', 'info');
@@ -6993,17 +7088,17 @@ function initModalSwipeDownGestures() {
     const backdrop = getActiveModalBackdrop(dialog);
     if (!backdrop) return;
 
-    // Avoid hijacking interactive form controls
-    const tag = touch.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || touch.target.isContentEditable) {
+    // Avoid hijacking interactive form controls, buttons, links, tabs, and filter chips
+    if (
+      touch.target.closest('button, .btn, a, input, textarea, select, [role="button"], .day-chip, .mini-chip, .ach-filter-chip, .creator-tab, label, .input-wrapper')
+    ) {
       return;
     }
 
-    // Allow dragging if user touches near header / drag pill or if content is at top (scrollTop <= 2)
-    const isPillOrHeader = Boolean(touch.target.closest('.mobile-drag-pill, .floating-modal-header, .auth-modal-header, .modal-title-with-icon'));
-    const isAtTop = dialog.scrollTop <= 2;
-
-    if (!isPillOrHeader && !isAtTop) {
+    // Per user requirement ("do not close windows like quich entry and achivements ,jornal when when swiping down"):
+    // ONLY allow drag-to-dismiss when the user EXPLICITLY touches the dedicated mobile drag pill at the very top.
+    const isPill = Boolean(touch.target.closest('.mobile-drag-pill'));
+    if (!isPill) {
       return;
     }
 

@@ -38,7 +38,15 @@ function authMiddleware(req, res, next) {
       req.isAuthenticated = true;
       return next();
     } catch (err) {
-      // Invalid token supplied
+      // If endpoint is a public/unauthenticated route (like login, register, health),
+      // an expired or invalid token must NOT block access. Fall back to guest partition.
+      const url = req.originalUrl || req.url || '';
+      if (url.includes('/login') || url.includes('/register') || url.includes('/health')) {
+        req.user = { id: 'default', email: 'guest@lifeos.local', name: 'Guest User' };
+        req.isAuthenticated = false;
+        return next();
+      }
+      // Invalid token supplied for an endpoint requiring valid authentication
       return res.status(401).json({
         success: false,
         error: 'Unauthorized: Invalid or expired token.',
