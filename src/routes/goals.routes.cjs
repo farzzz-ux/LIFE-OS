@@ -12,10 +12,10 @@ const router = express.Router();
 /**
  * GET /api/goals
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const { status, category } = req.query;
-    const goals = GoalRepository.getAll(req.user.id, { status, category });
+    const goals = await GoalRepository.getAll(req.user.id, { status, category });
     return res.status(200).json(goals);
   } catch (err) {
     next(err);
@@ -25,9 +25,9 @@ router.get('/', (req, res, next) => {
 /**
  * POST /api/goals
  */
-router.post('/', validateRequest(goalCreateSchema), (req, res, next) => {
+router.post('/', validateRequest(goalCreateSchema), async (req, res, next) => {
   try {
-    const newGoal = GoalRepository.create(req.user.id, req.body);
+    const newGoal = await GoalRepository.create(req.user.id, req.body);
     return res.status(201).json(newGoal);
   } catch (err) {
     next(err);
@@ -37,10 +37,10 @@ router.post('/', validateRequest(goalCreateSchema), (req, res, next) => {
 /**
  * PUT /api/goals/:id
  */
-router.put('/:id', (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updated = GoalRepository.update(req.user.id, id, req.body);
+    const updated = await GoalRepository.update(req.user.id, id, req.body);
     if (!updated) {
       return res.status(404).json({
         success: false,
@@ -59,10 +59,10 @@ router.put('/:id', (req, res, next) => {
 /**
  * DELETE /api/goals/:id
  */
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deleted = GoalRepository.delete(req.user.id, id);
+    const deleted = await GoalRepository.delete(req.user.id, id);
     if (!deleted) {
       return res.status(404).json({
         success: false,

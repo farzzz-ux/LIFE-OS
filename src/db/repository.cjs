@@ -1,5 +1,6 @@
 /**
- * LIFE OS — Data Access Layer & Tenant Isolation Repositories
+ * LIFE OS — Dual-Engine Data Access Layer & Tenant Isolation Repositories
+ * Works transparently with PostgreSQL (Supabase) and SQLite (Local / Fallback).
  * Strictly validates and enforces WHERE user_id = ? across all operations.
  */
 
@@ -9,8 +10,8 @@ const { db } = require('./database.cjs');
    USER REPOSITORY
    ========================================================================== */
 const UserRepository = {
-  findById(id) {
-    const row = db.prepare('SELECT id, email, name, password_hash, created_at FROM users WHERE id = ?').get(id);
+  async findById(id) {
+    const row = await db.get('SELECT id, email, name, password_hash, created_at FROM users WHERE id = ?', [id]);
     if (!row) return null;
     return {
       id: row.id,
@@ -21,8 +22,8 @@ const UserRepository = {
     };
   },
 
-  findByEmail(email) {
-    const row = db.prepare('SELECT id, email, name, password_hash, created_at FROM users WHERE email = ?').get(email.toLowerCase().trim());
+  async findByEmail(email) {
+    const row = await db.get('SELECT id, email, name, password_hash, created_at FROM users WHERE email = ?', [email.toLowerCase().trim()]);
     if (!row) return null;
     return {
       id: row.id,
@@ -33,24 +34,22 @@ const UserRepository = {
     };
   },
 
-  create({ id, email, name, passwordHash, createdAt }) {
-    const stmt = db.prepare(`
-      INSERT INTO users (id, email, name, password_hash, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    stmt.run(id, email.toLowerCase().trim(), name, passwordHash, createdAt || new Date().toISOString());
+  async create({ id, email, name, passwordHash, createdAt }) {
+    await db.run(
+      'INSERT INTO users (id, email, name, password_hash, created_at) VALUES (?, ?, ?, ?, ?)',
+      [id, email.toLowerCase().trim(), name, passwordHash, createdAt || new Date().toISOString()]
+    );
 
-    // Initialize user settings
-    db.prepare(`
-      INSERT OR IGNORE INTO user_settings (user_id, settings, unlocked_achievements, updated_at)
-      VALUES (?, '{"theme":"dark"}', '{}', datetime('now'))
-    `).run(id);
+    await db.run(
+      'INSERT OR IGNORE INTO user_settings (user_id, settings, unlocked_achievements, updated_at) VALUES (?, ?, ?, datetime(\'now\'))',
+      [id, '{"theme":"dark"}', '{}']
+    );
 
-    return this.findById(id);
+    return await this.findById(id);
   },
 
-  getAll() {
-    return db.prepare('SELECT id, email, name, created_at FROM users').all();
+  async getAll() {
+    return await db.all('SELECT id, email, name, created_at FROM users');
   }
 };
 
@@ -79,25 +78,25 @@ const HabitRepository = {
     };
   },
 
-  getAll(userId) {
-    const rows = db.prepare('SELECT * FROM habits WHERE user_id = ? ORDER BY created_at ASC').all(userId);
+  async getAll(userId) {
+    const rows = await db.all('SELECT * FROM habits WHERE user_id = ? ORDER BY created_at ASC', [userId]);
     return rows.map(this.formatHabit);
   },
 
-  getById(userId, id) {
-    const row = db.prepare('SELECT * FROM habits WHERE user_id = ? AND id = ?').get(userId, id);
+  async getById(userId, id) {
+    const row = await db.get('SELECT * FROM habits WHERE user_id = ? AND id = ?', [userId, id]);
     return this.formatHabit(row);
   },
 
-  create(userId, data) {
+  async create(userId, data) {
     const id = data.id || 'h_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     const createdAt = data.createdAt || new Date().toISOString();
     const completedDates = JSON.stringify(Array.isArray(data.completedDates) ? data.completedDates : []);
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO habits (id, user_id, name, category, routine, motivation, color, completed_dates, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
       data.name.trim(),
@@ -108,13 +107,13 @@ const HabitRepository = {
       completedDates,
       createdAt,
       null
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  update(userId, id, updates) {
-    const current = this.getById(userId, id);
+  async update(userId, id, updates) {
+    const current = await this.getById(userId, id);
     if (!current) return null;
 
     const name = updates.name !== undefined ? String(updates.name).trim() : current.name;
@@ -127,32 +126,33 @@ const HabitRepository = {
       : JSON.stringify(current.completedDates);
     const updatedAt = new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       UPDATE habits
       SET name = ?, category = ?, routine = ?, motivation = ?, color = ?, completed_dates = ?, updated_at = ?
       WHERE user_id = ? AND id = ?
-    `).run(name, category, routine, motivation, color, completedDates, updatedAt, userId, id);
+    `, [name, category, routine, motivation, color, completedDates, updatedAt, userId, id]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  toggle(userId, id, dateStr) {
-    const current = this.getById(userId, id);
+  async toggle(userId, id, dateStr) {
+    const current = await this.getById(userId, id);
     if (!current) return null;
 
-    const dates = [...current.completedDates];
-    const idx = dates.indexOf(dateStr);
-    if (idx >= 0) {
-      dates.splice(idx, 1);
+    const targetDate = dateStr || new Date().toISOString().split('T')[0];
+    let dates = [...current.completedDates];
+
+    if (dates.includes(targetDate)) {
+      dates = dates.filter(d => d !== targetDate);
     } else {
-      dates.push(dateStr);
+      dates.push(targetDate);
     }
 
-    return this.update(userId, id, { completedDates: dates });
+    return await this.update(userId, id, { completedDates: dates });
   },
 
-  delete(userId, id) {
-    const res = db.prepare('DELETE FROM habits WHERE user_id = ? AND id = ?').run(userId, id);
+  async delete(userId, id) {
+    const res = await db.run('DELETE FROM habits WHERE user_id = ? AND id = ?', [userId, id]);
     return res.changes > 0;
   }
 };
@@ -175,7 +175,7 @@ const TaskRepository = {
     };
   },
 
-  getAll(userId, filters = {}) {
+  async getAll(userId, filters = {}) {
     let query = 'SELECT * FROM tasks WHERE user_id = ?';
     const params = [userId];
 
@@ -189,41 +189,41 @@ const TaskRepository = {
     }
 
     query += ' ORDER BY created_at DESC';
-    const rows = db.prepare(query).all(...params);
+    const rows = await db.all(query, params);
     return rows.map(this.formatTask);
   },
 
-  getById(userId, id) {
-    const row = db.prepare('SELECT * FROM tasks WHERE user_id = ? AND id = ?').get(userId, id);
+  async getById(userId, id) {
+    const row = await db.get('SELECT * FROM tasks WHERE user_id = ? AND id = ?', [userId, id]);
     return this.formatTask(row);
   },
 
-  create(userId, data) {
+  async create(userId, data) {
     const id = data.id || 't_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-    const isCompleted = Boolean(data.completed);
-    const completedAt = isCompleted ? (data.completedAt || new Date().toISOString()) : null;
     const createdAt = data.createdAt || new Date().toISOString();
+    const completed = data.completed ? 1 : 0;
+    const completedAt = completed ? (data.completedAt || createdAt) : null;
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO tasks (id, user_id, title, priority, category, due_date, completed, completed_at, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
       data.title.trim(),
-      ['high', 'medium', 'low'].includes(data.priority) ? data.priority : 'medium',
-      (data.category || 'Work').trim(),
+      data.priority || 'medium',
+      data.category || 'Work',
       data.dueDate || 'Today',
-      isCompleted ? 1 : 0,
+      completed,
       completedAt,
       createdAt
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  update(userId, id, updates) {
-    const current = this.getById(userId, id);
+  async update(userId, id, updates) {
+    const current = await this.getById(userId, id);
     if (!current) return null;
 
     const title = updates.title !== undefined ? String(updates.title).trim() : current.title;
@@ -235,58 +235,50 @@ const TaskRepository = {
     let completedAt = current.completedAt;
 
     if (updates.completed !== undefined) {
-      const wasCompleted = current.completed;
       completed = Boolean(updates.completed);
-      if (updates.completedAt !== undefined) {
-        completedAt = updates.completedAt;
-      } else if (completed && (!completedAt || !wasCompleted)) {
-        completedAt = new Date().toISOString();
-      } else if (!completed) {
-        completedAt = null;
-      }
+      completedAt = completed ? (current.completedAt || new Date().toISOString()) : null;
     }
 
-    db.prepare(`
+    await db.run(`
       UPDATE tasks
       SET title = ?, priority = ?, category = ?, due_date = ?, completed = ?, completed_at = ?
       WHERE user_id = ? AND id = ?
-    `).run(title, priority, category, dueDate, completed ? 1 : 0, completedAt, userId, id);
+    `, [title, priority, category, dueDate, completed ? 1 : 0, completedAt, userId, id]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  delete(userId, id) {
-    const res = db.prepare('DELETE FROM tasks WHERE user_id = ? AND id = ?').run(userId, id);
+  async toggle(userId, id) {
+    const current = await this.getById(userId, id);
+    if (!current) return null;
+    return await this.update(userId, id, { completed: !current.completed });
+  },
+
+  async delete(userId, id) {
+    const res = await db.run('DELETE FROM tasks WHERE user_id = ? AND id = ?', [userId, id]);
     return res.changes > 0;
   }
 };
 
 /* ==========================================================================
-   CALENDAR / SCHEDULE REPOSITORY (Multi-User Isolated)
+   CALENDAR & SCHEDULE REPOSITORY (Multi-User Isolated)
    ========================================================================== */
 const CalendarRepository = {
   formatEvent(row) {
     if (!row) return null;
     let repeatDays = [];
     let completedDates = [];
-    try {
-      repeatDays = typeof row.repeat_days === 'string' ? JSON.parse(row.repeat_days) : (row.repeat_days || []);
-    } catch (e) {
-      repeatDays = [];
-    }
-    try {
-      completedDates = typeof row.completed_dates === 'string' ? JSON.parse(row.completed_dates) : (row.completed_dates || []);
-    } catch (e) {
-      completedDates = [];
-    }
+    try { repeatDays = typeof row.repeat_days === 'string' ? JSON.parse(row.repeat_days) : (row.repeat_days || []); } catch (e) {}
+    try { completedDates = typeof row.completed_dates === 'string' ? JSON.parse(row.completed_dates) : (row.completed_dates || []); } catch (e) {}
+
     return {
       id: row.id,
       title: row.title,
       date: row.date,
-      hour: row.hour,
-      startHour: row.start_hour,
-      duration: row.duration,
-      durationHours: row.duration_hours,
+      hour: Number(row.hour !== undefined ? row.hour : row.start_hour),
+      startHour: Number(row.start_hour !== undefined ? row.start_hour : row.hour),
+      duration: Number(row.duration !== undefined ? row.duration : row.duration_hours),
+      durationHours: Number(row.duration_hours !== undefined ? row.duration_hours : row.duration),
       category: row.category || 'Work',
       recurrence: row.recurrence || 'once',
       repeatDays: Array.isArray(repeatDays) ? repeatDays : [],
@@ -297,31 +289,38 @@ const CalendarRepository = {
     };
   },
 
-  getAll(userId) {
-    const rows = db.prepare('SELECT * FROM calendar_events WHERE user_id = ? ORDER BY date ASC, hour ASC').all(userId);
+  async getAll(userId, date = null) {
+    let query = 'SELECT * FROM calendar_events WHERE user_id = ?';
+    const params = [userId];
+
+    if (date) {
+      query += ' AND date = ?';
+      params.push(date);
+    }
+
+    query += ' ORDER BY date ASC, hour ASC';
+    const rows = await db.all(query, params);
     return rows.map(this.formatEvent);
   },
 
-  getById(userId, id) {
-    const row = db.prepare('SELECT * FROM calendar_events WHERE user_id = ? AND id = ?').get(userId, id);
+  async getById(userId, id) {
+    const row = await db.get('SELECT * FROM calendar_events WHERE user_id = ? AND id = ?', [userId, id]);
     return this.formatEvent(row);
   },
 
-  create(userId, data) {
+  async create(userId, data) {
     const id = data.id || 'sch_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-    const hour = Number(data.hour ?? data.startHour ?? 9);
-    const duration = Number(data.duration ?? data.durationHours ?? 1);
-    const recurrence = ['everyday', 'selected_days'].includes(data.recurrence) ? data.recurrence : 'once';
-    const repeatDays = Array.isArray(data.repeatDays) ? data.repeatDays : [];
-    const isCompleted = Boolean(data.completed);
-    const completedDates = Array.isArray(data.completedDates)
-      ? data.completedDates
-      : (isCompleted && data.date ? [data.date] : []);
+    const hour = Number(data.hour !== undefined ? data.hour : (data.startHour || 9));
+    const duration = Number(data.duration !== undefined ? data.duration : (data.durationHours || 1));
+    const recurrence = data.recurrence || 'once';
+    const repeatDays = JSON.stringify(Array.isArray(data.repeatDays) ? data.repeatDays : []);
+    const completedDates = JSON.stringify(Array.isArray(data.completedDates) ? data.completedDates : []);
+    const createdAt = data.createdAt || new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO calendar_events (id, user_id, title, date, hour, start_hour, duration, duration_hours, category, recurrence, repeat_days, completed, completed_dates, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
       data.title.trim(),
@@ -332,49 +331,36 @@ const CalendarRepository = {
       duration,
       data.category || 'Work',
       recurrence,
-      JSON.stringify(repeatDays),
-      (isCompleted || completedDates.length > 0) ? 1 : 0,
-      JSON.stringify(completedDates),
-      data.createdAt || new Date().toISOString(),
+      repeatDays,
+      data.completed ? 1 : 0,
+      completedDates,
+      createdAt,
       null
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  update(userId, id, updates) {
-    const current = this.getById(userId, id);
+  async update(userId, id, updates) {
+    const current = await this.getById(userId, id);
     if (!current) return null;
 
     const title = updates.title !== undefined ? String(updates.title).trim() : current.title;
     const date = updates.date !== undefined ? updates.date : current.date;
-    const hour = updates.hour !== undefined ? Number(updates.hour) : current.hour;
-    const duration = updates.duration !== undefined ? Number(updates.duration) : current.duration;
+    const hour = Number(updates.hour !== undefined ? updates.hour : (updates.startHour !== undefined ? updates.startHour : current.hour));
+    const duration = Number(updates.duration !== undefined ? updates.duration : (updates.durationHours !== undefined ? updates.durationHours : current.duration));
     const category = updates.category !== undefined ? updates.category : current.category;
     const recurrence = updates.recurrence !== undefined ? updates.recurrence : current.recurrence;
     const repeatDays = updates.repeatDays !== undefined ? updates.repeatDays : current.repeatDays;
-
-    let completedDates = current.completedDates;
-    if (Array.isArray(updates.completedDates)) {
-      completedDates = updates.completedDates;
-    } else if (updates.completed !== undefined) {
-      const targetDate = updates.date || current.date || new Date().toISOString().split('T')[0];
-      if (updates.completed && !completedDates.includes(targetDate)) {
-        completedDates = [...completedDates, targetDate];
-      } else if (!updates.completed) {
-        completedDates = completedDates.filter(d => d !== targetDate);
-      }
-    }
-
-    const completed = updates.completed !== undefined ? Boolean(updates.completed) : completedDates.length > 0;
+    const completed = updates.completed !== undefined ? Boolean(updates.completed) : current.completed;
+    const completedDates = updates.completedDates !== undefined ? updates.completedDates : current.completedDates;
     const updatedAt = new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       UPDATE calendar_events
-      SET title = ?, date = ?, hour = ?, start_hour = ?, duration = ?, duration_hours = ?,
-          category = ?, recurrence = ?, repeat_days = ?, completed = ?, completed_dates = ?, updated_at = ?
+      SET title = ?, date = ?, hour = ?, start_hour = ?, duration = ?, duration_hours = ?, category = ?, recurrence = ?, repeat_days = ?, completed = ?, completed_dates = ?, updated_at = ?
       WHERE user_id = ? AND id = ?
-    `).run(
+    `, [
       title,
       date,
       hour,
@@ -389,13 +375,13 @@ const CalendarRepository = {
       updatedAt,
       userId,
       id
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  delete(userId, id) {
-    const res = db.prepare('DELETE FROM calendar_events WHERE user_id = ? AND id = ?').run(userId, id);
+  async delete(userId, id) {
+    const res = await db.run('DELETE FROM calendar_events WHERE user_id = ? AND id = ?', [userId, id]);
     return res.changes > 0;
   }
 };
@@ -418,25 +404,25 @@ const FinanceRepository = {
     };
   },
 
-  getAll(userId) {
-    const rows = db.prepare('SELECT * FROM financial_records WHERE user_id = ? ORDER BY date DESC, created_at DESC').all(userId);
+  async getAll(userId) {
+    const rows = await db.all('SELECT * FROM financial_records WHERE user_id = ? ORDER BY date DESC, created_at DESC', [userId]);
     return rows.map(this.formatTx);
   },
 
-  getById(userId, id) {
-    const row = db.prepare('SELECT * FROM financial_records WHERE user_id = ? AND id = ?').get(userId, id);
+  async getById(userId, id) {
+    const row = await db.get('SELECT * FROM financial_records WHERE user_id = ? AND id = ?', [userId, id]);
     return this.formatTx(row);
   },
 
-  create(userId, data) {
+  async create(userId, data) {
     const id = data.id || 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     const amount = Math.round(Number(data.amount) * 100) / 100;
     const createdAt = data.createdAt || new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO financial_records (id, user_id, description, amount, type, category, payment_method, date, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
       data.description.trim(),
@@ -446,13 +432,13 @@ const FinanceRepository = {
       data.paymentMethod || 'UPI',
       data.date || new Date().toISOString().split('T')[0],
       createdAt
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  delete(userId, id) {
-    const res = db.prepare('DELETE FROM financial_records WHERE user_id = ? AND id = ?').run(userId, id);
+  async delete(userId, id) {
+    const res = await db.run('DELETE FROM financial_records WHERE user_id = ? AND id = ?', [userId, id]);
     return res.changes > 0;
   }
 };
@@ -473,38 +459,56 @@ const JournalRepository = {
     };
   },
 
-  getAll(userId) {
-    const rows = db.prepare('SELECT * FROM journal_entries WHERE user_id = ? ORDER BY date DESC, created_at DESC').all(userId);
+  async getAll(userId) {
+    const rows = await db.all('SELECT * FROM journal_entries WHERE user_id = ? ORDER BY date DESC, created_at DESC', [userId]);
     return rows.map(this.formatEntry);
   },
 
-  getById(userId, id) {
-    const row = db.prepare('SELECT * FROM journal_entries WHERE user_id = ? AND id = ?').get(userId, id);
+  async getById(userId, id) {
+    const row = await db.get('SELECT * FROM journal_entries WHERE user_id = ? AND id = ?', [userId, id]);
     return this.formatEntry(row);
   },
 
-  create(userId, data) {
+  async create(userId, data) {
     const id = data.id || 'j_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     const createdAt = data.createdAt || new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO journal_entries (id, user_id, title, category, content, date, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
-      data.title.trim(),
+      data.title ? data.title.trim() : 'Reflection',
       data.category || 'Reflection',
-      data.content ? data.content.trim() : '',
+      data.content || '',
       data.date || new Date().toISOString().split('T')[0],
       createdAt
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  delete(userId, id) {
-    const res = db.prepare('DELETE FROM journal_entries WHERE user_id = ? AND id = ?').run(userId, id);
+  async update(userId, id, updates) {
+    const current = await this.getById(userId, id);
+    if (!current) return null;
+
+    const title = updates.title !== undefined ? String(updates.title).trim() : current.title;
+    const category = updates.category !== undefined ? String(updates.category).trim() : current.category;
+    const content = updates.content !== undefined ? String(updates.content) : current.content;
+    const date = updates.date !== undefined ? updates.date : current.date;
+
+    await db.run(`
+      UPDATE journal_entries
+      SET title = ?, category = ?, content = ?, date = ?
+      WHERE user_id = ? AND id = ?
+    `, [title, category, content, date, userId, id]);
+
+    return await this.getById(userId, id);
+  },
+
+  async delete(userId, id) {
+    const res = await db.run('DELETE FROM journal_entries WHERE user_id = ? AND id = ?', [userId, id]);
     return res.changes > 0;
   }
 };
@@ -516,11 +520,7 @@ const GoalRepository = {
   formatGoal(row) {
     if (!row) return null;
     let milestones = [];
-    try {
-      milestones = typeof row.milestones === 'string' ? JSON.parse(row.milestones) : (row.milestones || []);
-    } catch (e) {
-      milestones = [];
-    }
+    try { milestones = typeof row.milestones === 'string' ? JSON.parse(row.milestones) : (row.milestones || []); } catch (e) {}
     return {
       id: row.id,
       title: row.title,
@@ -535,7 +535,7 @@ const GoalRepository = {
     };
   },
 
-  getAll(userId, filters = {}) {
+  async getAll(userId, filters = {}) {
     let query = 'SELECT * FROM goals WHERE user_id = ?';
     const params = [userId];
 
@@ -544,31 +544,31 @@ const GoalRepository = {
       params.push(filters.status);
     }
     if (filters.category) {
-      query += ' AND LOWER(category) = ?';
-      params.push(filters.category.toLowerCase());
+      query += ' AND category = ?';
+      params.push(filters.category);
     }
 
     query += ' ORDER BY created_at DESC';
-    const rows = db.prepare(query).all(...params);
+    const rows = await db.all(query, params);
     return rows.map(this.formatGoal);
   },
 
-  getById(userId, id) {
-    const row = db.prepare('SELECT * FROM goals WHERE user_id = ? AND id = ?').get(userId, id);
+  async getById(userId, id) {
+    const row = await db.get('SELECT * FROM goals WHERE user_id = ? AND id = ?', [userId, id]);
     return this.formatGoal(row);
   },
 
-  create(userId, data) {
+  async create(userId, data) {
     const id = data.id || 'g_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     const progress = Math.min(100, Math.max(0, Number(data.progress) || 0));
     const status = data.status === 'completed' || progress >= 100 ? 'completed' : 'in-progress';
     const milestones = JSON.stringify(Array.isArray(data.milestones) ? data.milestones : []);
     const createdAt = data.createdAt || new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO goals (id, user_id, title, category, target_date, progress, status, metrics, description, milestones, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
       data.title.trim(),
@@ -580,13 +580,13 @@ const GoalRepository = {
       data.description ? String(data.description).trim() : '',
       milestones,
       createdAt
-    );
+    ]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  update(userId, id, updates) {
-    const current = this.getById(userId, id);
+  async update(userId, id, updates) {
+    const current = await this.getById(userId, id);
     if (!current) return null;
 
     const title = updates.title !== undefined ? String(updates.title).trim() : current.title;
@@ -610,17 +610,17 @@ const GoalRepository = {
       ? JSON.stringify(Array.isArray(updates.milestones) ? updates.milestones : [])
       : JSON.stringify(current.milestones);
 
-    db.prepare(`
+    await db.run(`
       UPDATE goals
       SET title = ?, category = ?, target_date = ?, progress = ?, status = ?, metrics = ?, description = ?, milestones = ?
       WHERE user_id = ? AND id = ?
-    `).run(title, category, targetDate, progress, status, metrics, description, milestones, userId, id);
+    `, [title, category, targetDate, progress, status, metrics, description, milestones, userId, id]);
 
-    return this.getById(userId, id);
+    return await this.getById(userId, id);
   },
 
-  delete(userId, id) {
-    const res = db.prepare('DELETE FROM goals WHERE user_id = ? AND id = ?').run(userId, id);
+  async delete(userId, id) {
+    const res = await db.run('DELETE FROM goals WHERE user_id = ? AND id = ?', [userId, id]);
     return res.changes > 0;
   }
 };
@@ -632,11 +632,7 @@ const LifeScoreRepository = {
   formatSnapshot(row) {
     if (!row) return null;
     let scores = {};
-    try {
-      scores = typeof row.scores === 'string' ? JSON.parse(row.scores) : (row.scores || {});
-    } catch (e) {
-      scores = {};
-    }
+    try { scores = typeof row.scores === 'string' ? JSON.parse(row.scores) : (row.scores || {}); } catch (e) {}
     return {
       id: row.id,
       periodType: row.period_type,
@@ -650,52 +646,46 @@ const LifeScoreRepository = {
     };
   },
 
-  getAll(userId, periodType = null) {
-    let query = 'SELECT * FROM lifescore_logs WHERE user_id = ?';
-    const params = [userId];
-
-    if (periodType) {
-      query += ' AND period_type = ?';
-      params.push(periodType);
-    }
-
-    query += ' ORDER BY calculated_at DESC';
-    const rows = db.prepare(query).all(...params);
+  async getAll(userId) {
+    const rows = await db.all('SELECT * FROM lifescore_logs WHERE user_id = ? ORDER BY calculated_at DESC', [userId]);
     return rows.map(this.formatSnapshot);
   },
 
-  getByPeriodKey(userId, periodKey) {
-    const row = db.prepare('SELECT * FROM lifescore_logs WHERE user_id = ? AND period_key = ?').get(userId, periodKey);
+  async getLogs(userId) {
+    return await this.getAll(userId);
+  },
+
+  async getByPeriod(userId, periodKey) {
+    const row = await db.get('SELECT * FROM lifescore_logs WHERE user_id = ? AND period_key = ?', [userId, periodKey]);
     return this.formatSnapshot(row);
   },
 
-  create(userId, data) {
-    const existing = this.getByPeriodKey(userId, data.periodKey);
-    if (existing) {
-      return { duplicate: true, snapshot: existing };
-    }
-
-    const id = data.id || `snap_${data.periodType || 'period'}_${data.periodKey}`;
+  async saveSnapshot(userId, data) {
+    const id = data.id || 'ls_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+    const scores = JSON.stringify(data.scores || {});
     const calculatedAt = data.calculatedAt || new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       INSERT OR REPLACE INTO lifescore_logs (id, user_id, period_type, period_key, start_date, end_date, scores, formula_version, is_baseline, calculated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
+    `, [
       id,
       userId,
-      data.periodType || 'week',
+      data.periodType || 'overall',
       data.periodKey,
       data.startDate || '',
       data.endDate || '',
-      JSON.stringify(data.scores || {}),
+      scores,
       data.formulaVersion || '2.0-5pillar',
       data.isBaseline ? 1 : 0,
       calculatedAt
-    );
+    ]);
 
-    const snapshot = this.getByPeriodKey(userId, data.periodKey);
-    return { duplicate: false, snapshot };
+    return await this.getByPeriod(userId, data.periodKey);
+  },
+
+  async create(userId, data) {
+    return await this.saveSnapshot(userId, data);
   }
 };
 
@@ -706,33 +696,35 @@ const MoodRepository = {
   formatMood(row) {
     if (!row) return null;
     return {
+      id: row.id,
       date: row.date,
       score: Number(row.score),
-      energy: Number(row.energy) || 3,
-      note: row.note || ''
+      energy: Number(row.energy),
+      note: row.note || '',
+      createdAt: row.created_at
     };
   },
 
-  getAll(userId) {
-    const rows = db.prepare('SELECT * FROM mood_logs WHERE user_id = ? ORDER BY date DESC').all(userId);
+  async getAll(userId) {
+    const rows = await db.all('SELECT * FROM mood_logs WHERE user_id = ? ORDER BY date DESC', [userId]);
     return rows.map(this.formatMood);
   },
 
-  upsert(userId, data) {
+  async upsert(userId, data) {
     const date = data.date || new Date().toISOString().split('T')[0];
     const score = Math.round(Number(data.score));
     const energy = Number(data.energy) || 3;
     const note = data.note ? String(data.note).trim() : '';
     const id = `mood_${userId}_${date}`;
 
-    db.prepare(`
+    await db.run(`
       INSERT INTO mood_logs (id, user_id, date, score, energy, note, created_at)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
       ON CONFLICT(user_id, date) DO UPDATE SET
         score = excluded.score,
         energy = excluded.energy,
         note = excluded.note
-    `).run(id, userId, date, score, energy, note);
+    `, [id, userId, date, score, energy, note]);
 
     return { date, score, energy, note };
   }
@@ -742,8 +734,8 @@ const MoodRepository = {
    USER SETTINGS & ACHIEVEMENTS REPOSITORY
    ========================================================================== */
 const UserSettingsRepository = {
-  get(userId) {
-    const row = db.prepare('SELECT settings, unlocked_achievements, updated_at FROM user_settings WHERE user_id = ?').get(userId);
+  async get(userId) {
+    const row = await db.get('SELECT settings, unlocked_achievements, updated_at FROM user_settings WHERE user_id = ?', [userId]);
     if (!row) {
       return {
         settings: { theme: 'dark' },
@@ -762,20 +754,20 @@ const UserSettingsRepository = {
     };
   },
 
-  update(userId, updates = {}) {
-    const current = this.get(userId);
+  async update(userId, updates = {}) {
+    const current = await this.get(userId);
     const newSettings = updates.settings ? { ...current.settings, ...updates.settings } : current.settings;
     const newAchievements = updates.unlockedAchievements ? { ...current.unlockedAchievements, ...updates.unlockedAchievements } : current.unlockedAchievements;
     const updatedAt = new Date().toISOString();
 
-    db.prepare(`
+    await db.run(`
       INSERT INTO user_settings (user_id, settings, unlocked_achievements, updated_at)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         settings = excluded.settings,
         unlocked_achievements = excluded.unlocked_achievements,
         updated_at = excluded.updated_at
-    `).run(userId, JSON.stringify(newSettings), JSON.stringify(newAchievements), updatedAt);
+    `, [userId, JSON.stringify(newSettings), JSON.stringify(newAchievements), updatedAt]);
 
     return {
       settings: newSettings,
@@ -786,119 +778,114 @@ const UserSettingsRepository = {
 };
 
 /* ==========================================================================
-   FULL USER DATA PARTITION REPOSITORY (For /api/data & /api/user/data & /api/sync)
+   FULL USER DATA PARTITION REPOSITORY
    ========================================================================== */
 const UserDataRepository = {
-  getPartition(userId) {
-    const habits = HabitRepository.getAll(userId);
-    const tasks = TaskRepository.getAll(userId);
-    const transactions = FinanceRepository.getAll(userId);
-    const schedule = CalendarRepository.getAll(userId);
-    const journal = JournalRepository.getAll(userId);
-    const goals = GoalRepository.getAll(userId);
-    const scoreSnapshots = LifeScoreRepository.getAll(userId);
-    const moodLogs = MoodRepository.getAll(userId);
-    const meta = UserSettingsRepository.get(userId);
+  async getPartition(userId) {
+    const habits = await HabitRepository.getAll(userId);
+    const tasks = await TaskRepository.getAll(userId);
+    const transactions = await FinanceRepository.getAll(userId);
+    const schedule = await CalendarRepository.getAll(userId);
+    const journal = await JournalRepository.getAll(userId);
+    const goals = await GoalRepository.getAll(userId);
+    const scoreSnapshots = await LifeScoreRepository.getAll(userId);
+    const moodLogs = await MoodRepository.getAll(userId);
+    const meta = await UserSettingsRepository.get(userId);
 
     return {
-      habits,
-      tasks,
-      transactions,
-      schedule,
-      journal,
-      goals,
-      scoreSnapshots,
-      moodLogs,
-      unlockedAchievements: meta.unlockedAchievements,
-      settings: meta.settings,
-      updatedAt: meta.updatedAt
+      habits: habits || [],
+      tasks: tasks || [],
+      transactions: transactions || [],
+      schedule: schedule || [],
+      journal: journal || [],
+      goals: goals || [],
+      scoreSnapshots: scoreSnapshots || [],
+      moodLogs: moodLogs || [],
+      unlockedAchievements: meta.unlockedAchievements || {},
+      settings: meta.settings || { theme: 'dark' },
+      updatedAt: meta.updatedAt || new Date().toISOString()
     };
   },
 
-  savePartition(userId, data) {
-    const syncTx = db.transaction(() => {
-      if (Array.isArray(data.habits)) {
-        db.prepare('DELETE FROM habits WHERE user_id = ?').run(userId);
-        for (const h of data.habits) {
-          if (h && h.name) HabitRepository.create(userId, h);
-        }
+  async savePartition(userId, data) {
+    if (Array.isArray(data.habits)) {
+      await db.run('DELETE FROM habits WHERE user_id = ?', [userId]);
+      for (const h of data.habits) {
+        if (h && h.name) await HabitRepository.create(userId, h);
       }
+    }
 
-      if (Array.isArray(data.tasks)) {
-        db.prepare('DELETE FROM tasks WHERE user_id = ?').run(userId);
-        for (const t of data.tasks) {
-          if (t && t.title) TaskRepository.create(userId, t);
-        }
+    if (Array.isArray(data.tasks)) {
+      await db.run('DELETE FROM tasks WHERE user_id = ?', [userId]);
+      for (const t of data.tasks) {
+        if (t && t.title) await TaskRepository.create(userId, t);
       }
+    }
 
-      if (Array.isArray(data.transactions)) {
-        db.prepare('DELETE FROM financial_records WHERE user_id = ?').run(userId);
-        for (const tx of data.transactions) {
-          if (tx && tx.description) FinanceRepository.create(userId, tx);
-        }
+    if (Array.isArray(data.transactions)) {
+      await db.run('DELETE FROM financial_records WHERE user_id = ?', [userId]);
+      for (const tx of data.transactions) {
+        if (tx && tx.description) await FinanceRepository.create(userId, tx);
       }
+    }
 
-      if (Array.isArray(data.schedule)) {
-        db.prepare('DELETE FROM calendar_events WHERE user_id = ?').run(userId);
-        for (const s of data.schedule) {
-          if (s && s.title) CalendarRepository.create(userId, s);
-        }
+    if (Array.isArray(data.schedule)) {
+      await db.run('DELETE FROM calendar_events WHERE user_id = ?', [userId]);
+      for (const s of data.schedule) {
+        if (s && s.title) await CalendarRepository.create(userId, s);
       }
+    }
 
-      if (Array.isArray(data.journal)) {
-        db.prepare('DELETE FROM journal_entries WHERE user_id = ?').run(userId);
-        for (const j of data.journal) {
-          if (j && j.title) JournalRepository.create(userId, j);
-        }
+    if (Array.isArray(data.journal)) {
+      await db.run('DELETE FROM journal_entries WHERE user_id = ?', [userId]);
+      for (const j of data.journal) {
+        if (j && (j.content || j.title)) await JournalRepository.create(userId, j);
       }
+    }
 
-      if (Array.isArray(data.goals)) {
-        db.prepare('DELETE FROM goals WHERE user_id = ?').run(userId);
-        for (const g of data.goals) {
-          if (g && g.title) GoalRepository.create(userId, g);
-        }
+    if (Array.isArray(data.goals)) {
+      await db.run('DELETE FROM goals WHERE user_id = ?', [userId]);
+      for (const g of data.goals) {
+        if (g && g.title) await GoalRepository.create(userId, g);
       }
+    }
 
-      if (Array.isArray(data.scoreSnapshots)) {
-        for (const snap of data.scoreSnapshots) {
-          if (snap && snap.periodKey) LifeScoreRepository.create(userId, snap);
-        }
+    if (Array.isArray(data.scoreSnapshots)) {
+      for (const snap of data.scoreSnapshots) {
+        if (snap && snap.periodKey) await LifeScoreRepository.create(userId, snap);
       }
+    }
 
-      if (Array.isArray(data.moodLogs)) {
-        for (const m of data.moodLogs) {
-          if (m && m.date) MoodRepository.upsert(userId, m);
-        }
+    if (Array.isArray(data.moodLogs)) {
+      for (const m of data.moodLogs) {
+        if (m && m.date) await MoodRepository.upsert(userId, m);
       }
+    }
 
-      UserSettingsRepository.update(userId, {
-        settings: data.settings,
-        unlockedAchievements: data.unlockedAchievements
-      });
+    await UserSettingsRepository.update(userId, {
+      settings: data.settings,
+      unlockedAchievements: data.unlockedAchievements
     });
 
-    syncTx();
-    return this.getPartition(userId);
+    return await this.getPartition(userId);
   },
 
-  reset(userId) {
-    const resetTx = db.transaction(() => {
-      db.prepare('DELETE FROM habits WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM tasks WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM financial_records WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM calendar_events WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM journal_entries WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM goals WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM lifescore_logs WHERE user_id = ?').run(userId);
-      db.prepare('DELETE FROM mood_logs WHERE user_id = ?').run(userId);
-      UserSettingsRepository.update(userId, {
-        settings: { theme: 'dark' },
-        unlockedAchievements: {}
-      });
+  async reset(userId) {
+    await db.run('DELETE FROM habits WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM tasks WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM financial_records WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM calendar_events WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM journal_entries WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM goals WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM lifescore_logs WHERE user_id = ?', [userId]);
+    await db.run('DELETE FROM mood_logs WHERE user_id = ?', [userId]);
+
+    await UserSettingsRepository.update(userId, {
+      settings: { theme: 'dark' },
+      unlockedAchievements: {}
     });
 
-    resetTx();
-    return this.getPartition(userId);
+    return await this.getPartition(userId);
   }
 };
 

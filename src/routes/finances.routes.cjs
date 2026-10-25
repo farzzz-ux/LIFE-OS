@@ -12,9 +12,9 @@ const router = express.Router();
 /**
  * GET /api/finances
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const transactions = FinanceRepository.getAll(req.user.id);
+    const transactions = await FinanceRepository.getAll(req.user.id);
     return res.status(200).json(transactions);
   } catch (err) {
     next(err);
@@ -24,9 +24,9 @@ router.get('/', (req, res, next) => {
 /**
  * POST /api/finances
  */
-router.post('/', validateRequest(financeCreateSchema), (req, res, next) => {
+router.post('/', validateRequest(financeCreateSchema), async (req, res, next) => {
   try {
-    const newTx = FinanceRepository.create(req.user.id, req.body);
+    const newTx = await FinanceRepository.create(req.user.id, req.body);
     return res.status(201).json(newTx);
   } catch (err) {
     next(err);
@@ -36,10 +36,10 @@ router.post('/', validateRequest(financeCreateSchema), (req, res, next) => {
 /**
  * DELETE /api/finances/:id
  */
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deleted = FinanceRepository.delete(req.user.id, id);
+    const deleted = await FinanceRepository.delete(req.user.id, id);
     if (!deleted) {
       return res.status(404).json({
         success: false,

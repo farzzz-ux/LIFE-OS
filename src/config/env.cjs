@@ -13,6 +13,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'lifeos-cloud-sync-super-secure-production-jwt-token-key-2026';
 const DB_PATH = process.env.DB_PATH || path.resolve(process.cwd(), 'data', 'lifeos.db');
+const DATABASE_URL = process.env.DATABASE_URL || '';
 const BACKUP_RETENTION_COUNT = parseInt(process.env.BACKUP_RETENTION_COUNT, 10) || 7;
 const AUTH_RATE_LIMIT_MAX = parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) || 100;
 const API_RATE_LIMIT_MAX = parseInt(process.env.API_RATE_LIMIT_MAX, 10) || 1000;
@@ -42,6 +43,7 @@ module.exports = {
   PORT,
   JWT_SECRET,
   DB_PATH,
+  DATABASE_URL,
   BACKUP_RETENTION_COUNT,
   AUTH_RATE_LIMIT_MAX,
   API_RATE_LIMIT_MAX

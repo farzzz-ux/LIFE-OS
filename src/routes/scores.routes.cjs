@@ -12,10 +12,10 @@ const router = express.Router();
 /**
  * GET /api/scores/snapshots
  */
-router.get('/snapshots', (req, res, next) => {
+router.get('/snapshots', async (req, res, next) => {
   try {
     const { periodType } = req.query;
-    const snapshots = LifeScoreRepository.getAll(req.user.id, periodType);
+    const snapshots = await LifeScoreRepository.getAll(req.user.id, periodType);
     return res.status(200).json(snapshots);
   } catch (err) {
     next(err);
@@ -25,9 +25,9 @@ router.get('/snapshots', (req, res, next) => {
 /**
  * POST /api/scores/snapshots
  */
-router.post('/snapshots', validateRequest(snapshotCreateSchema), (req, res, next) => {
+router.post('/snapshots', validateRequest(snapshotCreateSchema), async (req, res, next) => {
   try {
-    const result = LifeScoreRepository.create(req.user.id, req.body);
+    const result = await LifeScoreRepository.create(req.user.id, req.body);
     if (result.duplicate) {
       return res.status(200).json({
         success: true,

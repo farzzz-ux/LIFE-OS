@@ -12,9 +12,9 @@ const router = express.Router();
 /**
  * GET /api/mood
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const moods = MoodRepository.getAll(req.user.id);
+    const moods = await MoodRepository.getAll(req.user.id);
     return res.status(200).json(moods);
   } catch (err) {
     next(err);
@@ -24,9 +24,9 @@ router.get('/', (req, res, next) => {
 /**
  * POST /api/mood
  */
-router.post('/', validateRequest(moodCreateSchema), (req, res, next) => {
+router.post('/', validateRequest(moodCreateSchema), async (req, res, next) => {
   try {
-    const newMood = MoodRepository.upsert(req.user.id, req.body);
+    const newMood = await MoodRepository.upsert(req.user.id, req.body);
     return res.status(201).json(newMood);
   } catch (err) {
     next(err);

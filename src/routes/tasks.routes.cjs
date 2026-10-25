@@ -12,7 +12,7 @@ const router = express.Router();
 /**
  * GET /api/tasks
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const priority = req.query.priority;
     let completed = null;
@@ -20,7 +20,7 @@ router.get('/', (req, res, next) => {
       completed = req.query.completed === 'true' || req.query.completed === '1';
     }
 
-    const tasks = TaskRepository.getAll(req.user.id, { priority, completed });
+    const tasks = await TaskRepository.getAll(req.user.id, { priority, completed });
     return res.status(200).json(tasks);
   } catch (err) {
     next(err);
@@ -30,9 +30,9 @@ router.get('/', (req, res, next) => {
 /**
  * POST /api/tasks
  */
-router.post('/', validateRequest(taskCreateSchema), (req, res, next) => {
+router.post('/', validateRequest(taskCreateSchema), async (req, res, next) => {
   try {
-    const newTask = TaskRepository.create(req.user.id, req.body);
+    const newTask = await TaskRepository.create(req.user.id, req.body);
     return res.status(201).json(newTask);
   } catch (err) {
     next(err);
@@ -42,10 +42,10 @@ router.post('/', validateRequest(taskCreateSchema), (req, res, next) => {
 /**
  * PUT /api/tasks/:id
  */
-router.put('/:id', (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updated = TaskRepository.update(req.user.id, id, req.body);
+    const updated = await TaskRepository.update(req.user.id, id, req.body);
     if (!updated) {
       return res.status(404).json({
         success: false,
@@ -64,10 +64,10 @@ router.put('/:id', (req, res, next) => {
 /**
  * DELETE /api/tasks/:id
  */
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deleted = TaskRepository.delete(req.user.id, id);
+    const deleted = await TaskRepository.delete(req.user.id, id);
     if (!deleted) {
       return res.status(404).json({
         success: false,

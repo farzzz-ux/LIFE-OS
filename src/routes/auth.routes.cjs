@@ -22,7 +22,7 @@ router.post('/register', authLimiter, validateRequest(registerSchema), async (re
     const { email, password, name, initialData } = req.body;
     const cleanEmail = email.trim().toLowerCase();
 
-    const existing = UserRepository.findByEmail(cleanEmail);
+    const existing = await UserRepository.findByEmail(cleanEmail);
     if (existing) {
       return res.status(409).json({
         success: false,
@@ -36,7 +36,7 @@ router.post('/register', authLimiter, validateRequest(registerSchema), async (re
     const passwordHash = await bcrypt.hash(password, 10);
     const userId = 'u_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
-    const newUser = UserRepository.create({
+    const newUser = await UserRepository.create({
       id: userId,
       email: cleanEmail,
       name: (name || cleanEmail.split('@')[0]).trim(),
@@ -45,7 +45,7 @@ router.post('/register', authLimiter, validateRequest(registerSchema), async (re
     });
 
     if (initialData && typeof initialData === 'object') {
-      UserDataRepository.savePartition(userId, initialData);
+      await UserDataRepository.savePartition(userId, initialData);
     }
 
     const token = jwt.sign(
@@ -84,7 +84,7 @@ router.post('/login', authLimiter, validateRequest(loginSchema), async (req, res
     const { email, password } = req.body;
     const cleanEmail = email.trim().toLowerCase();
 
-    const user = UserRepository.findByEmail(cleanEmail);
+    const user = await UserRepository.findByEmail(cleanEmail);
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -137,9 +137,9 @@ router.post('/login', authLimiter, validateRequest(loginSchema), async (req, res
 /**
  * GET /api/auth/me
  */
-router.get('/me', authMiddleware, requireAuth, (req, res, next) => {
+router.get('/me', authMiddleware, requireAuth, async (req, res, next) => {
   try {
-    const user = UserRepository.findById(req.user.id);
+    const user = await UserRepository.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         success: false,

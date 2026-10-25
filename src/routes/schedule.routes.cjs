@@ -12,9 +12,9 @@ const router = express.Router();
 /**
  * GET /api/schedule
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const events = CalendarRepository.getAll(req.user.id);
+    const events = await CalendarRepository.getAll(req.user.id);
     return res.status(200).json(events);
   } catch (err) {
     next(err);
@@ -24,9 +24,9 @@ router.get('/', (req, res, next) => {
 /**
  * POST /api/schedule
  */
-router.post('/', validateRequest(scheduleCreateSchema), (req, res, next) => {
+router.post('/', validateRequest(scheduleCreateSchema), async (req, res, next) => {
   try {
-    const newEvent = CalendarRepository.create(req.user.id, req.body);
+    const newEvent = await CalendarRepository.create(req.user.id, req.body);
     return res.status(201).json(newEvent);
   } catch (err) {
     next(err);
@@ -36,10 +36,10 @@ router.post('/', validateRequest(scheduleCreateSchema), (req, res, next) => {
 /**
  * PUT /api/schedule/:id
  */
-router.put('/:id', (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updated = CalendarRepository.update(req.user.id, id, req.body);
+    const updated = await CalendarRepository.update(req.user.id, id, req.body);
     if (!updated) {
       return res.status(404).json({
         success: false,
@@ -58,10 +58,10 @@ router.put('/:id', (req, res, next) => {
 /**
  * DELETE /api/schedule/:id
  */
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deleted = CalendarRepository.delete(req.user.id, id);
+    const deleted = await CalendarRepository.delete(req.user.id, id);
     if (!deleted) {
       return res.status(404).json({
         success: false,

@@ -13,7 +13,7 @@ const router = express.Router();
 /**
  * GET /api/health
  */
-router.get('/health', (req, res) => {
+router.get('/health', async (req, res) => {
   let taskCount = 0;
   let userCount = 0;
   try {
@@ -38,9 +38,9 @@ router.get('/health', (req, res) => {
 /**
  * GET /api/user/data (Authenticated tenant partition)
  */
-router.get('/user/data', requireAuth, (req, res, next) => {
+router.get('/user/data', requireAuth, async (req, res, next) => {
   try {
-    const partition = UserDataRepository.getPartition(req.user.id);
+    const partition = await UserDataRepository.getPartition(req.user.id);
     return res.status(200).json(partition);
   } catch (err) {
     next(err);
@@ -50,7 +50,7 @@ router.get('/user/data', requireAuth, (req, res, next) => {
 /**
  * POST /api/user/data (Authenticated tenant partition update)
  */
-router.post('/user/data', requireAuth, (req, res, next) => {
+router.post('/user/data', requireAuth, async (req, res, next) => {
   try {
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({
@@ -62,7 +62,7 @@ router.post('/user/data', requireAuth, (req, res, next) => {
       });
     }
 
-    const updated = UserDataRepository.savePartition(req.user.id, req.body);
+    const updated = await UserDataRepository.savePartition(req.user.id, req.body);
     return res.status(200).json({
       success: true,
       state: updated,
@@ -76,9 +76,9 @@ router.post('/user/data', requireAuth, (req, res, next) => {
 /**
  * GET /api/data (Full state fetch for current tenant or guest)
  */
-router.get('/data', (req, res, next) => {
+router.get('/data', async (req, res, next) => {
   try {
-    const partition = UserDataRepository.getPartition(req.user.id);
+    const partition = await UserDataRepository.getPartition(req.user.id);
     return res.status(200).json(partition);
   } catch (err) {
     next(err);
@@ -88,7 +88,7 @@ router.get('/data', (req, res, next) => {
 /**
  * POST /api/sync (State synchronization)
  */
-router.post('/sync', (req, res, next) => {
+router.post('/sync', async (req, res, next) => {
   try {
     if (!req.body || typeof req.body !== 'object') {
       return res.status(400).json({
@@ -100,7 +100,7 @@ router.post('/sync', (req, res, next) => {
       });
     }
 
-    const updated = UserDataRepository.savePartition(req.user.id, req.body);
+    const updated = await UserDataRepository.savePartition(req.user.id, req.body);
     return res.status(200).json({
       success: true,
       state: updated
@@ -113,9 +113,9 @@ router.post('/sync', (req, res, next) => {
 /**
  * POST /api/reset (Reset state to demo/initial)
  */
-router.post('/reset', (req, res, next) => {
+router.post('/reset', async (req, res, next) => {
   try {
-    const resetData = UserDataRepository.reset(req.user.id);
+    const resetData = await UserDataRepository.reset(req.user.id);
     return res.status(200).json({
       success: true,
       state: resetData

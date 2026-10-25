@@ -12,9 +12,9 @@ const router = express.Router();
 /**
  * GET /api/habits
  */
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const habits = HabitRepository.getAll(req.user.id);
+    const habits = await HabitRepository.getAll(req.user.id);
     return res.status(200).json(habits);
   } catch (err) {
     next(err);
@@ -24,9 +24,9 @@ router.get('/', (req, res, next) => {
 /**
  * POST /api/habits
  */
-router.post('/', validateRequest(habitCreateSchema), (req, res, next) => {
+router.post('/', validateRequest(habitCreateSchema), async (req, res, next) => {
   try {
-    const newHabit = HabitRepository.create(req.user.id, req.body);
+    const newHabit = await HabitRepository.create(req.user.id, req.body);
     return res.status(201).json(newHabit);
   } catch (err) {
     next(err);
@@ -36,10 +36,10 @@ router.post('/', validateRequest(habitCreateSchema), (req, res, next) => {
 /**
  * PUT /api/habits/:id
  */
-router.put('/:id', (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updated = HabitRepository.update(req.user.id, id, req.body);
+    const updated = await HabitRepository.update(req.user.id, id, req.body);
     if (!updated) {
       return res.status(404).json({
         success: false,
@@ -58,11 +58,11 @@ router.put('/:id', (req, res, next) => {
 /**
  * POST /api/habits/:id/toggle
  */
-router.post('/:id/toggle', (req, res, next) => {
+router.post('/:id/toggle', async (req, res, next) => {
   try {
     const { id } = req.params;
     const dateStr = req.body.date || new Date().toISOString().split('T')[0];
-    const updated = HabitRepository.toggle(req.user.id, id, dateStr);
+    const updated = await HabitRepository.toggle(req.user.id, id, dateStr);
     if (!updated) {
       return res.status(404).json({
         success: false,
@@ -81,10 +81,10 @@ router.post('/:id/toggle', (req, res, next) => {
 /**
  * DELETE /api/habits/:id
  */
-router.delete('/:id', (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
-    const deleted = HabitRepository.delete(req.user.id, id);
+    const deleted = await HabitRepository.delete(req.user.id, id);
     if (!deleted) {
       return res.status(404).json({
         success: false,
