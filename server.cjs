@@ -68,9 +68,15 @@ app.use(helmet({
   noSniff: true
 }));
 
-// Serve static assets from root and pages directory
+// Serve static assets from root, assets, and pages directory
 app.use(express.static(__dirname));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
+
+// Automatic route aliasing for root PWA icons
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png', '/icon-192.png', '/icon-512.png'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'assets', 'icons', path.basename(req.path)));
+});
 
 app.use(cors({
   origin: true,
