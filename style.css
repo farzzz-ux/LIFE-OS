@@ -9954,18 +9954,41 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
   }
 
-  /* 4. Stats Tab (Analytics): Full-Window Horizontal Scroll & Remove Pill Scroller */
-  .timeframe-pill-group {
-    overflow-x: visible !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    width: auto !important;
+  /* 4. Stats Tab (Analytics): Sleek Single-Row Segmented Control */
+  .timeframe-pill-group,
+  #hero-timeframe-group,
+  #star-timeframe-group {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: stretch !important;
+    width: 100% !important;
     max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    padding: 3px !important;
+    gap: 4px !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    border-radius: var(--radius-full) !important;
   }
 
   .timeframe-pill {
-    flex: 1 1 auto !important;
-    min-width: 80px !important;
+    flex: 1 1 0px !important;
+    min-width: 0 !important;
+    padding: 7px 6px !important;
+    font-size: 0.76rem !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+  }
+
+  .timeframe-pill i {
+    font-size: 0.72rem !important;
+    flex-shrink: 0 !important;
   }
 
   /* Full container scroll on analytics page so elements on the right are never cut off */
@@ -10107,12 +10130,29 @@ button, .btn, [role="button"], .creator-tab, .mini-chip, .day-chip, .ach-filter-
   font-variant-numeric: tabular-nums !important;
 }
 
-.top-bar-header-row,
-.top-actions,
-.header-status-group {
+.top-actions {
   flex-wrap: wrap !important;
   gap: 8px 12px !important;
   align-items: center !important;
+}
+
+.top-bar-header-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  gap: 8px !important;
+}
+
+.header-status-group {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
 }
 
 /* 3. Text Truncation Architecture: Apply min-width: 0 on flex wrappers and graceful ellipsis */
@@ -10287,5 +10327,228 @@ button, .btn, [role="button"], .creator-tab, .mini-chip, .day-chip, .ach-filter-
   .finance-split-layout,
   .goals-container {
     padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ==========================================================================
+   PHONE LAYOUT CRITICAL POLISH & FIXES
+   ========================================================================== */
+
+/* 1. Stats% & Dimension Breakdown Strict Alignment on Phone Layout */
+@media (max-width: 768px) {
+  /* Star Chart 5-Dimensions Cards alignment */
+  .star-dimensions-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .star-dim-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .star-dim-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    overflow: hidden !important;
+  }
+
+  .star-dim-names {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    flex: 1 1 auto !important;
+  }
+
+  .star-dim-name,
+  .star-dim-sub {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+  }
+
+  .star-dim-name {
+    font-size: 0.78rem !important;
+  }
+
+  .star-dim-sub {
+    font-size: 0.65rem !important;
+  }
+
+  .star-dim-mid {
+    flex: 0 0 72px !important;
+    width: 72px !important;
+    min-width: 72px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .star-dim-track {
+    width: 100% !important;
+    height: 6px !important;
+  }
+
+  .star-dim-right {
+    flex: 0 0 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .star-dim-pct {
+    font-size: 0.82rem !important;
+    font-weight: 800 !important;
+    font-variant-numeric: tabular-nums !important;
+    text-align: right !important;
+    display: inline-block !important;
+    width: 100% !important;
+  }
+
+  /* Life Score Hero Card and Pillars on Mobile */
+  .life-score-hero-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 18px 14px !important;
+    gap: 16px !important;
+  }
+
+  .score-hero-left {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .score-gauge-wrap {
+    margin: 0 auto 6px auto !important;
+    align-self: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .score-hero-intro {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .score-hero-top-row {
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .score-hero-desc {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .score-hero-right {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 14px 14px !important;
+  }
+
+  .score-pillar {
+    width: 100% !important;
+  }
+
+  .pillar-info {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+
+  .pillar-info span {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .pillar-info strong {
+    flex: 0 0 42px !important;
+    text-align: right !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* 2. Journal Editor Header: Clean Full Title & Actions Row */
+  .journal-editor-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-bottom: 14px !important;
+  }
+
+  .journal-editor-title {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    font-size: 1.12rem !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .journal-editor-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+/* 3. Settings Clearing & Double-Check Modal Actions (phone layout) */
+@media (max-width: 640px) {
+  .double-check-actions,
+  #double-check-modal .modal-actions,
+  .double-check-dialog .double-check-actions,
+  #double-check-modal div:has(> #double-check-cancel-btn) {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    width: 100% !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    margin-top: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .double-check-actions .btn,
+  #double-check-modal #double-check-cancel-btn,
+  #double-check-modal #double-check-confirm-btn,
+  .double-check-dialog .btn {
+    width: 100% !important;
+    margin: 0 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
   }
 }
