@@ -10080,3 +10080,212 @@ button, .btn, [role="button"], .creator-tab, .mini-chip, .day-chip, .ach-filter-
   opacity: 0.8 !important;
   transition: transform 0.1s ease, opacity 0.1s ease !important;
 }
+
+
+/* ==========================================================================
+   ACHIEVEMENTS MOBILE SCROLL & SURGICAL OVERFLOW OPTIMIZATIONS
+   ========================================================================== */
+
+/* 1. Shortcuts Keycaps Styling */
+.shortcut-key {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #38bdf8;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+  display: inline-block;
+  line-height: 1.2;
+}
+
+/* 2. Header Jitter Prevention: Tabular numbers & Flex Wrapping with Gap */
+.live-clock,
+#top-clock-display {
+  font-variant-numeric: tabular-nums !important;
+}
+
+.top-bar-header-row,
+.top-actions,
+.header-status-group {
+  flex-wrap: wrap !important;
+  gap: 8px 12px !important;
+  align-items: center !important;
+}
+
+/* 3. Text Truncation Architecture: Apply min-width: 0 on flex wrappers and graceful ellipsis */
+.task-left,
+.task-body,
+.task-info,
+.habit-meta,
+.habit-title-box,
+.agenda-event-info,
+.agenda-event-meta,
+.tx-left,
+.tx-info,
+.goal-header-left,
+.goal-title-wrap,
+.dash-task-left,
+.dash-habit-left,
+.journal-entry-left,
+.journal-entry-header,
+.rank-tier-left,
+.rank-tier-title-area,
+.timeblock-info {
+  min-width: 0 !important;
+}
+
+.task-label,
+.habit-title-text,
+.agenda-event-title,
+.schedule-event-title,
+.timeblock-title,
+.tx-title,
+.tx-desc,
+.goal-title,
+.dash-goal-title,
+.dash-task-label,
+.journal-item-title {
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+}
+
+/* 4. Achievements Mobile Scroll Behavior: Replicating Rank Badge Pattern */
+@media (max-width: 768px) {
+  .achievements-modal-dialog {
+    max-height: 88dvh !important;
+    max-height: 88vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 14px calc(18px + env(safe-area-inset-bottom, 0px)) 14px !important;
+    gap: 8px !important;
+  }
+
+  .achievements-summary-strip {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    margin-bottom: 4px !important;
+  }
+
+  .ach-stat-box {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Scrollable inner container: replicates rank badge list pattern */
+  .achievements-cards-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    max-height: calc(88dvh - 220px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    padding: 4px 4px calc(2rem + env(safe-area-inset-bottom, 0px)) 2px !important;
+    flex: 1 1 auto !important;
+    gap: 12px !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(56, 189, 248, 0.45) rgba(15, 23, 42, 0.5) !important;
+  }
+
+  .achievements-cards-grid::-webkit-scrollbar {
+    width: 7px !important;
+  }
+  .achievements-cards-grid::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.45) !important;
+    border-radius: 9999px !important;
+  }
+  .achievements-cards-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.5), rgba(139, 92, 246, 0.5)) !important;
+    border-radius: 9999px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  .achievements-cards-grid::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #38bdf8, #8b5cf6) !important;
+  }
+}
+
+/* 5. Responsive Metric Summary Cards for screens <= 640px */
+@media (max-width: 640px) {
+  .metrics-grid,
+  .hero-metrics-grid,
+  .finance-overview-grid,
+  .goals-overview-grid,
+  .stats-grid,
+  .finance-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .metric-card,
+  .fin-card,
+  .stat-card,
+  .ach-stat-box,
+  .goal-card-overview {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 12px 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .metric-value,
+  .fin-card-value,
+  .stat-val,
+  .ach-stat-val {
+    font-size: clamp(1.05rem, 4.4vw, 1.35rem) !important;
+    font-variant-numeric: tabular-nums !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+  }
+
+  .rupee-symbol-badge,
+  .metric-currency,
+  .fin-currency-symbol {
+    flex-shrink: 0 !important;
+  }
+
+  .metric-label,
+  .fin-card-label,
+  .stat-label,
+  .ach-stat-lbl {
+    font-size: clamp(0.62rem, 2.4vw, 0.72rem) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
+/* 6. Mobile Bottom Nav & Safe Area Inset */
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    box-sizing: border-box !important;
+  }
+
+  .content-area,
+  main,
+  .app-layout,
+  .journal-layout,
+  #journal-container,
+  .habits-container,
+  .tasks-container,
+  .calendar-layout,
+  .finance-split-layout,
+  .goals-container {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

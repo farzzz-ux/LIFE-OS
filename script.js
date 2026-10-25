@@ -296,6 +296,11 @@ function formatINR(val, includeSign = false) {
 }
 
 function getValidCalendarDate() {
+  const today = new Date();
+  const todayStr = getLocalDateString(today);
+  if (!appState.selectedCalendarDate) {
+    appState.selectedCalendarDate = todayStr;
+  }
   if (appState.calendarViewDate instanceof Date && !isNaN(appState.calendarViewDate.getTime())) {
     return appState.calendarViewDate;
   }
@@ -306,7 +311,7 @@ function getValidCalendarDate() {
       return d;
     }
   }
-  appState.calendarViewDate = new Date();
+  appState.calendarViewDate = today;
   return appState.calendarViewDate;
 }
 
@@ -871,6 +876,12 @@ async function loadFullState() {
       appState = { ...appState, ...parsed };
       if (!Array.isArray(appState.schedule)) appState.schedule = [];
       if (!Array.isArray(appState.journal)) appState.journal = [];
+      // Fall back to today's date dynamically if unset or outdated from past session
+      const todayStr = getLocalDateString(new Date());
+      if (!appState.selectedCalendarDate || appState.selectedCalendarDate !== todayStr) {
+        appState.selectedCalendarDate = todayStr;
+      }
+      appState.calendarViewDate = new Date();
       getValidCalendarDate();
       renderPage();
     } catch (e) {
@@ -8291,32 +8302,172 @@ function initEventListeners() {
     }
   });
 
+  // Helper to close any currently open modal
+  function closeAnyActiveModal() {
+    let closed = false;
+    const activeModals = document.querySelectorAll(
+      '#floating-creator-modal.active, #quick-entry-modal.active, #achievements-modal.active, ' +
+      '#rank-lookup-modal.active, #goal-modal.active, #auth-modal.active, #lifeos-auth-modal.active, ' +
+      '#double-check-modal.active, #journal-writer-modal.active, #journal-reflection-modal.active, ' +
+      '#shortcuts-help-modal.active, .floating-modal-backdrop.active, .modal-backdrop.active'
+    );
+    activeModals.forEach(modal => {
+      const id = modal.id;
+      if (id === 'floating-creator-modal' && typeof closeCreatorModal === 'function') closeCreatorModal();
+      else if (id === 'achievements-modal' && typeof closeAchievementsModal === 'function') closeAchievementsModal();
+      else if (id === 'rank-lookup-modal' && typeof closeRankLookupModal === 'function') closeRankLookupModal();
+      else if (id === 'goal-modal' && typeof closeGoalModal === 'function') closeGoalModal();
+      else if ((id === 'auth-modal' || id === 'lifeos-auth-modal') && typeof closeAuthModal === 'function') closeAuthModal();
+      else if (id === 'double-check-modal' && typeof closeDoubleCheckModal === 'function') closeDoubleCheckModal();
+      else if (id === 'journal-writer-modal' && typeof closeJournalWriterModal === 'function') closeJournalWriterModal();
+      else if (id === 'journal-reflection-modal' && typeof closeJournalReaderModal === 'function') closeJournalReaderModal();
+      else if (id === 'shortcuts-help-modal') closeShortcutsHelpModal();
+      else {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+      closed = true;
+    });
+    document.body.classList.remove('modal-open');
+    return closed;
+  }
+
+  // Guard: non-intrusive check so typing in inputs/textareas/selects/contenteditables is never interrupted
+  function isTypingContext(target) {
+    if (!target) return false;
+    const tag = (target.tagName || '').toUpperCase();
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return true;
+    if (target.isContentEditable) return true;
+    if (target.closest && target.closest('[contenteditable="true"]')) return true;
+    return false;
+  }
+
+  // 1-second chord state for 'G' navigation sequence
+  let _gChordActive = false;
+  let _gChordTimer = null;
+
   // Global Keyboard Shortcuts
   window.addEventListener('keydown', (e) => {
+    // 1. Global Chord: Cmd+K / Ctrl+K (Command Palette / Quick Search)
+    if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'k')) {
+      e.preventDefault();
+      // If a search input exists on the current page, focus it
+      const currentSearch = document.getElementById('task-search-input') ||
+                            document.getElementById('finance-search-input') ||
+                            document.getElementById('fin-search-input') ||
+                            document.getElementById('journal-search-input') ||
+                            document.getElementById('goals-search-input');
+      if (currentSearch) {
+        currentSearch.focus();
+        if (typeof currentSearch.select === 'function') currentSearch.select();
+        showToast('Search focused (Cmd+K)', 'info');
+      } else {
+        openShortcutsHelpModal();
+      }
+      return;
+    }
+
+    // 2. Escape: Close any open modal regardless of active element
     if (e.key === 'Escape') {
-      closeCreatorModal();
-      closeJournalReaderModal();
-      closeJournalWriterModal();
-      closeAchievementsModal();
-      closeRankLookupModal();
-      closeGoalModal();
-      closeAuthModal();
+      const wasClosed = closeAnyActiveModal();
+      if (wasClosed) {
+        e.preventDefault();
+        return;
+      }
+      if (isTypingContext(e.target)) {
+        e.target.blur();
+        return;
+      }
       return;
     }
 
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+    // Guard: Do not intercept single keys or chord sequences when user is typing in form controls
+    if (isTypingContext(e.target)) {
       return;
     }
 
-    if (e.key === 'a' || e.key === 'A') openAchievementsModal();
-    if (e.key === 'g' || e.key === 'G') openCreatorModal('goal');
-    if (e.key === 's' || e.key === 'S') openCreatorModal('schedule');
-    if (e.key === 'h' || e.key === 'H') openCreatorModal('habit');
-    if (e.key === 't' || e.key === 'T') openCreatorModal('task');
-    if (e.key === 'f' || e.key === 'F') openCreatorModal('finance');
-    if (e.key === 'q' || e.key === 'Q') openCreatorModal('schedule');
-    if (e.key === 'j' || e.key === 'J') {
-      if (document.getElementById('journal-writer-modal')) openJournalWriterModal();
+    const key = e.key;
+    const lowerKey = key.toLowerCase();
+
+    // 3. 'G' Sequence (1-second chord window)
+    if (_gChordActive) {
+      _gChordActive = false;
+      clearTimeout(_gChordTimer);
+
+      if (lowerKey === 'd') {
+        e.preventDefault();
+        navigateToUrl('/index.html');
+        showToast('Navigating -> Dashboard', 'info');
+        return;
+      }
+      if (lowerKey === 't') {
+        e.preventDefault();
+        navigateToUrl('/pages/tasks.html');
+        showToast('Navigating -> Tasks', 'info');
+        return;
+      }
+      if (lowerKey === 'h') {
+        e.preventDefault();
+        navigateToUrl('/pages/habits.html');
+        showToast('Navigating -> Habits', 'info');
+        return;
+      }
+      if (lowerKey === 'c') {
+        e.preventDefault();
+        navigateToUrl('/pages/calendar.html');
+        showToast('Navigating -> Calendar', 'info');
+        return;
+      }
+      if (lowerKey === 'f') {
+        e.preventDefault();
+        navigateToUrl('/pages/finances.html');
+        showToast('Navigating -> Finances', 'info');
+        return;
+      }
+    }
+
+    // Initiate 'G' sequence
+    if (lowerKey === 'g') {
+      _gChordActive = true;
+      clearTimeout(_gChordTimer);
+      _gChordTimer = setTimeout(() => {
+        _gChordActive = false;
+      }, 1000); // 1-second window
+      return;
+    }
+
+    // 4. Single-key shortcuts
+    // 'c': Open existing Quick-Capture / Time-Block modal
+    if (lowerKey === 'c') {
+      e.preventDefault();
+      openCreatorModal('schedule');
+      return;
+    }
+
+    // 't': Navigate to Dashboard (index.html)
+    if (lowerKey === 't') {
+      e.preventDefault();
+      navigateToUrl('/index.html');
+      return;
+    }
+
+    // '?': Trigger shortcut help
+    if (key === '?' || (key === '/' && e.shiftKey)) {
+      e.preventDefault();
+      openShortcutsHelpModal();
+      return;
+    }
+
+    // Complementary utility shortcuts (preserving existing 'a' for achievements and 'j' for journal)
+    if (lowerKey === 'a') {
+      e.preventDefault();
+      openAchievementsModal();
+      return;
+    }
+    if (lowerKey === 'j') {
+      e.preventDefault();
+      if (typeof openJournalWriterModal === 'function') openJournalWriterModal();
+      return;
     }
   });
 }
@@ -8868,6 +9019,8 @@ if (typeof window !== 'undefined') {
   window.initSettings = initSettings;
   window.startTopProgressBar = startTopProgressBar;
   window.finishTopProgressBar = finishTopProgressBar;
+  window.openShortcutsHelpModal = openShortcutsHelpModal;
+  window.closeShortcutsHelpModal = closeShortcutsHelpModal;
   window.renderSettingsView = renderSettingsView;
   window.ensureDoubleCheckModal = ensureDoubleCheckModal;
   window.openDoubleCheckModal = openDoubleCheckModal;
@@ -8949,4 +9102,115 @@ if (typeof module !== 'undefined' && module.exports) {
     DEFAULT_STATE: (typeof DEFAULT_STATE !== 'undefined' ? DEFAULT_STATE : getStarterBaseline()),
     appState
   };
+}
+
+
+/* ==========================================================================
+   SHORTCUTS HELP MODAL (Non-intrusive visual guide for power users)
+   ========================================================================== */
+function ensureShortcutsHelpModal() {
+  if (document.getElementById('shortcuts-help-modal')) return;
+
+  const modalHtml = `
+    <div id="shortcuts-help-modal" class="floating-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="floating-modal-dialog" style="max-width: 520px; width: 92%;">
+        <div class="floating-modal-header" style="padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+          <div class="modal-title-with-icon">
+            <div class="modal-icon-badge" style="background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.35);">
+              <i class="fa-solid fa-keyboard text-cyan"></i>
+            </div>
+            <div>
+              <h3 class="floating-title" style="font-size: 1.15rem; margin: 0;">Keyboard Shortcuts</h3>
+              <p class="floating-subtitle" style="font-size: 0.76rem; color: #94a3b8; margin: 2px 0 0 0;">Power-user navigation & quick entry</p>
+            </div>
+          </div>
+          <button type="button" class="floating-close-btn" id="shortcuts-modal-close" aria-label="Close modal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; padding-right: 4px;">
+          <!-- Quick Capture & Actions -->
+          <div style="background: rgba(14, 20, 36, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); font-weight: 700; margin-bottom: 8px;">Actions & Modals</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Quick-Capture / Time-Block Modal</span>
+              <kbd class="shortcut-key">c</kbd>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Close Any Open Modal</span>
+              <kbd class="shortcut-key">Escape</kbd>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Focus Search / Command Palette</span>
+              <kbd class="shortcut-key">Cmd/Ctrl + K</kbd>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Shortcut Help</span>
+              <kbd class="shortcut-key">?</kbd>
+            </div>
+          </div>
+
+          <!-- Navigation Chords -->
+          <div style="background: rgba(14, 20, 36, 0.85); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); padding: 12px 14px;">
+            <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); font-weight: 700; margin-bottom: 8px;">Navigation</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Navigate to Dashboard</span>
+              <kbd class="shortcut-key">t</kbd>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Go to Dashboard</span>
+              <div style="display: flex; gap: 4px;"><kbd class="shortcut-key">g</kbd> <span style="color:#64748b; font-size:0.75rem;">then</span> <kbd class="shortcut-key">d</kbd></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Go to Tasks</span>
+              <div style="display: flex; gap: 4px;"><kbd class="shortcut-key">g</kbd> <span style="color:#64748b; font-size:0.75rem;">then</span> <kbd class="shortcut-key">t</kbd></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Go to Habits</span>
+              <div style="display: flex; gap: 4px;"><kbd class="shortcut-key">g</kbd> <span style="color:#64748b; font-size:0.75rem;">then</span> <kbd class="shortcut-key">h</kbd></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Go to Calendar</span>
+              <div style="display: flex; gap: 4px;"><kbd class="shortcut-key">g</kbd> <span style="color:#64748b; font-size:0.75rem;">then</span> <kbd class="shortcut-key">c</kbd></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
+              <span style="font-size: 0.84rem; color: var(--text-primary);">Go to Finances</span>
+              <div style="display: flex; gap: 4px;"><kbd class="shortcut-key">g</kbd> <span style="color:#64748b; font-size:0.75rem;">then</span> <kbd class="shortcut-key">f</kbd></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  const modal = document.getElementById('shortcuts-help-modal');
+  const closeBtn = document.getElementById('shortcuts-modal-close');
+  if (closeBtn) closeBtn.addEventListener('click', closeShortcutsHelpModal);
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeShortcutsHelpModal();
+    });
+  }
+}
+
+function openShortcutsHelpModal() {
+  ensureShortcutsHelpModal();
+  const modal = document.getElementById('shortcuts-help-modal');
+  if (!modal) return;
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  if (typeof playSound === 'function') playSound('click');
+}
+
+function closeShortcutsHelpModal() {
+  const modal = document.getElementById('shortcuts-help-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  document.body.classList.remove('modal-open');
 }
