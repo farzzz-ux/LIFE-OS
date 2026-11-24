@@ -2003,22 +2003,25 @@ function evaluateAchievements(silent = false) {
     appState.unlockedAchievements = {};
   }
 
-  const newUnlocked = {};
+  // Once an achievement is unlocked, it LOCKS IN permanently.
+  // Preserving already unlocked achievements prevents losing earned trophies if an item is unchecked or updated.
+  const newUnlocked = { ...appState.unlockedAchievements };
   let newlyUnlocked = [];
 
   ACHIEVEMENTS_LIST.forEach(ach => {
-    const currentVal = getMetricValueForAchievement(ach, appState);
-    if (currentVal >= ach.target) {
-      newUnlocked[ach.id] = appState.unlockedAchievements[ach.id] || {
-        unlockedAt: new Date().toISOString()
-      };
-      if (!appState.unlockedAchievements[ach.id]) {
+    // Only evaluate milestones not yet unlocked
+    if (!newUnlocked[ach.id]) {
+      const currentVal = getMetricValueForAchievement(ach, appState);
+      if (currentVal >= ach.target) {
+        newUnlocked[ach.id] = {
+          unlockedAt: new Date().toISOString()
+        };
         newlyUnlocked.push(ach);
       }
     }
   });
 
-  // Strictly assign only the genuinely earned achievements so unearned/sample achievements are never stuck
+  // Permanently lock in earned achievements
   appState.unlockedAchievements = newUnlocked;
   updateAchievementsBadge();
 
