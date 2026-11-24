@@ -16,6 +16,7 @@
 <br/>
 
 [![Live Production](https://img.shields.io/badge/Live%20Demo-os--yat2.onrender.com-06b6d4?style=for-the-badge&logo=render&logoColor=white)](https://os-yat2.onrender.com)
+[![Windows Desktop](https://img.shields.io/badge/Windows%20Desktop-Tauri%20v2%20%7C%20WebView2-24c8db?style=for-the-badge&logo=tauri&logoColor=white)](#-desktop-application-windows)
 [![Node.js](https://img.shields.io/badge/Node.js-v20%2B%20LTS-22c55e?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Database](https://img.shields.io/badge/Database-SQLite%20WAL%20%7C%20Supabase-0ea5e9?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 [![Security](https://img.shields.io/badge/Security-Helmet%20%7C%20JWT%20%7C%20RLS-a855f7?style=for-the-badge&logo=auth0&logoColor=white)](#-security-hardening)
@@ -25,6 +26,7 @@
 <br/>
 
 <p align="center">
+  <a href="#-desktop-application-windows"><b>Desktop App</b></a> •
   <a href="#-core-pillars"><b>Core Pillars</b></a> •
   <a href="#-system-architecture"><b>Architecture</b></a> •
   <a href="#-life-score-mathematical-engine"><b>Life Score Engine</b></a> •
@@ -40,6 +42,45 @@
 </div>
 
 <br/>
+
+## 🖥️ Desktop Application (Windows)
+
+Life OS is available as a production-grade, standalone Windows desktop application engineered with **Tauri v2** and **Microsoft Edge WebView2**.
+
+- **Ultra-Low Memory Footprint:** Idles at only **~35 MB of RAM** (up to 10× lighter than Electron alternatives).
+- **Offline-First & Resilient:** State persists permanently via encrypted local storage with automatic 60-second JSON snapshots to disk.
+- **Native System Tray Integration:** Quick access, window hide/show toggle, and background presence.
+- **Zero-Setup Setup:** Run anywhere with no external web dependencies.
+
+### 📥 Download & Install
+
+Head over to the **[GitHub Releases](../../releases)** page to download:
+
+| Package | File | Best For | Description |
+| :--- | :--- | :--- | :--- |
+| **Windows Installer** | `LIFE-OS-Setup.exe` | **Recommended** | Standard Windows setup wizard. Automatically adds a **Desktop icon**, **Start Menu shortcuts**, and registers in Windows Apps. |
+| **Portable Version** | `LIFE-OS-Portable.zip` | Power Users / USB | Zero installation. Extract anywhere and double-click `LIFE-OS.exe` to run immediately. |
+
+### 🛠️ Building Desktop App from Source
+
+Prerequisites: [Rust](https://rustup.rs/) (stable toolchain) and [Node.js](https://nodejs.org/).
+
+```bash
+# Install frontend & CLI dependencies
+npm install
+
+# Run desktop in local development mode
+npm run tauri:dev
+
+# Build portable .exe and NSIS installer
+npm run build:desktop
+```
+
+Compiled deliverables will be outputted to the `release/` folder:
+- `release/LIFE-OS-Setup.exe` (Installer)
+- `release/LIFE-OS-Portable.zip` (Portable bundle)
+
+---
 
 ## 🌟 Why Life OS?
 

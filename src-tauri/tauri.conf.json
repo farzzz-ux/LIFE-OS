@@ -1,0 +1,58 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "LIFE OS",
+  "version": "1.0.0",
+  "identifier": "com.lifeos.desktop",
+  "build": {
+    "frontendDist": "../dist",
+    "beforeDevCommand": "node scripts/prepare-dist.cjs",
+    "beforeBuildCommand": "node scripts/prepare-dist.cjs"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "LIFE OS",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "maximized": false,
+        "theme": "Dark",
+        "backgroundColor": "#090d16",
+        "zoomHotkeysEnabled": false,
+        "devtools": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' tauri: 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com https://cdnjs.cloudflare.com data: blob:; img-src 'self' data: https: blob:; font-src 'self' data: https:; connect-src 'self' http://localhost:* ws://localhost:*;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/64x64.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "languages": [
+          "English"
+        ],
+        "displayLanguageSelector": false
+      }
+    }
+  }
+}

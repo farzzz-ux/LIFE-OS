@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 
 # Environment & Credentials
@@ -37,3 +37,11 @@ browser/
 *.suo
 *.ntvs*
 *.njsproj
+
+# Desktop App & Tauri Build Outputs
+dist/
+src-tauri/target/
+release/
+*.exe
+*.dll
+

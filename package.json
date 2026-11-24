@@ -9,7 +9,12 @@
     "dev": "nodemon server.cjs",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "migrate": "node src/db/migrate.cjs",
-    "backup": "node scripts/backup-db.cjs"
+    "backup": "node scripts/backup-db.cjs",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build && node scripts/copy-release.cjs",
+    "build:desktop": "tauri build && node scripts/copy-release.cjs && makensis scripts/installer.nsi && node scripts/package-portable.cjs",
+    "build:installer": "makensis scripts/installer.nsi && node scripts/package-portable.cjs"
   },
   "keywords": [
     "life-os",
@@ -24,6 +29,7 @@
   "author": "LifeOS Engineering",
   "license": "MIT",
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.6",
     "nodemon": "^3.1.0"
   },
   "dependencies": {
